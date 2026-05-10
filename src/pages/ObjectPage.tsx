@@ -115,8 +115,9 @@ function ObjectPage() {
             imagePath={mug.imagePath}
           />
           <figcaption>
-            3D model path: <code>{mug.modelPath ?? 'No model path yet'}</code>. Physical
-            cup plus QR or AR marker path: <code>{mug.qrPath ?? mug.markerPatternPath}</code>
+            3D model path: <code>{mug.modelPath ?? 'No model path yet'}</code>. No camera
+            or AR marker is required for this object walkthrough. Physical QR path:{' '}
+            <code>{mug.qrPath ?? 'QR path pending'}</code>
           </figcaption>
         </figure>
       </div>

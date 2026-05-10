@@ -1,4 +1,4 @@
-import { createElement, useEffect, useMemo, useState } from 'react';
+import { createElement, useEffect, useMemo, useRef, useState } from 'react';
 
 const MODEL_VIEWER_SCRIPT_ID = 'glitching-archive-model-viewer';
 const MODEL_VIEWER_SRC =
@@ -17,6 +17,13 @@ interface ObjectModelViewerProps {
   modelPath?: string;
   imagePath?: string;
 }
+
+type ModelViewerElement = HTMLElement & {
+  cameraOrbit?: string;
+  cameraTarget?: string;
+  fieldOfView?: string;
+  updateFraming?: () => Promise<void>;
+};
 
 function loadModelViewerScript() {
   const existingScript = document.getElementById(
@@ -78,6 +85,7 @@ function fallbackReason(state: ModelState, modelPath?: string) {
 }
 
 function ObjectModelViewer({ title, modelPath, imagePath }: ObjectModelViewerProps) {
+  const modelViewerRef = useRef<ModelViewerElement | null>(null);
   const [modelState, setModelState] = useState<ModelState>(modelPath ? 'checking' : 'noModel');
   const [imageFailed, setImageFailed] = useState(false);
   const showModel = modelPath && modelState === 'ready';
@@ -131,6 +139,21 @@ function ObjectModelViewer({ title, modelPath, imagePath }: ObjectModelViewerPro
     };
   }, [modelPath]);
 
+  const frameModel = () => {
+    const viewer = modelViewerRef.current;
+
+    if (!viewer) {
+      return;
+    }
+
+    // The supplied procedural mug models are metric and roughly 0.12m tall.
+    // A close orbit keeps them legible without modifying the GLB asset scale.
+    viewer.cameraOrbit = '62deg 68deg 0.34m';
+    viewer.cameraTarget = '0.01m 0.058m 0.018m';
+    viewer.fieldOfView = '24deg';
+    void viewer.updateFraming?.();
+  };
+
   return (
     <div className="object-model-viewer">
       {showModel
@@ -141,6 +164,7 @@ function ObjectModelViewer({ title, modelPath, imagePath }: ObjectModelViewerPro
               heavier React 3D dependency for this no-camera walkthrough.
             */}
             {createElement('model-viewer', {
+              ref: modelViewerRef,
               src: modelPath,
               poster: imagePath,
               alt: `Interactive 3D model for ${title}`,
@@ -151,13 +175,51 @@ function ObjectModelViewer({ title, modelPath, imagePath }: ObjectModelViewerPro
               'rotation-per-second': '18deg',
               'shadow-intensity': '0.75',
               exposure: '0.95',
-              'camera-orbit': '35deg 68deg 2.8m',
-              'min-camera-orbit': 'auto auto 1.8m',
-              'max-camera-orbit': 'auto auto 4.2m',
-              'field-of-view': '32deg',
+              'camera-orbit': '62deg 68deg 0.34m',
+              'camera-target': '0.01m 0.058m 0.018m',
+              'min-camera-orbit': 'auto auto 0.2m',
+              'max-camera-orbit': 'auto auto 0.85m',
+              'field-of-view': '24deg',
               loading: 'eager',
+              onLoad: frameModel,
               onError: () => setModelState('failed'),
-            })}
+            },
+            createElement(
+              'button',
+              {
+                className: 'object-model-hotspot object-model-hotspot--memory',
+                slot: 'hotspot-memory',
+                'data-position': '0m 0.112m 0.018m',
+                'data-normal': '0m 1m 0m',
+                type: 'button',
+                'aria-label': 'Hotspot: stored memory layer',
+              },
+              createElement('span', null, 'Memory'),
+            ),
+            createElement(
+              'button',
+              {
+                className: 'object-model-hotspot object-model-hotspot--print',
+                slot: 'hotspot-print',
+                'data-position': '0.052m 0.072m 0.058m',
+                'data-normal': '0m 0m 1m',
+                type: 'button',
+                'aria-label': 'Hotspot: printed political surface',
+              },
+              createElement('span', null, 'Printed protest'),
+            ),
+            createElement(
+              'button',
+              {
+                className: 'object-model-hotspot object-model-hotspot--handle',
+                slot: 'hotspot-handle',
+                'data-position': '-0.072m 0.064m 0.015m',
+                'data-normal': '-1m 0m 0m',
+                type: 'button',
+                'aria-label': 'Hotspot: handle and use trace',
+              },
+              createElement('span', null, 'Handle'),
+            ))}
           </div>
         )
         : null}
@@ -176,19 +238,28 @@ function ObjectModelViewer({ title, modelPath, imagePath }: ObjectModelViewerPro
         </div>
       ) : null}
 
-      {modelPath ? (
-        <p className="object-model-viewer__status" aria-live="polite">
-          {modelState === 'checking'
-            ? 'Checking 3D model file...'
-            : modelState === 'loadingViewer'
-              ? 'Loading interactive 3D mug...'
-              : modelState === 'ready'
-                ? `Interactive 3D mug model: ${modelPath}`
-                : `${reason} Expected file location: ${modelPublicPath}.`}
-        </p>
-      ) : (
-        <p className="object-model-viewer__status">{reason}</p>
-      )}
+      <div className="object-model-viewer__copy">
+        <div>
+          <h2>{title}</h2>
+          <p>
+            Rotate the mug to inspect it as a domestic object carrying political memory:
+            printed surface, touch, storage, and unresolved archive context.
+          </p>
+        </div>
+        {modelPath ? (
+          <p className="object-model-viewer__status" aria-live="polite">
+            {modelState === 'checking'
+              ? 'Checking 3D model file...'
+              : modelState === 'loadingViewer'
+                ? 'Loading interactive 3D mug...'
+                : modelState === 'ready'
+                  ? `Interactive 3D mug model: ${modelPath}`
+                  : `${reason} Expected file location: ${modelPublicPath}.`}
+          </p>
+        ) : (
+          <p className="object-model-viewer__status">{reason}</p>
+        )}
+      </div>
     </div>
   );
 }

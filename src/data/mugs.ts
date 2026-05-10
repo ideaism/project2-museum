@@ -12,6 +12,8 @@ const sharedEthicsNoteIds = [
   'no-hallucinated-history',
 ] satisfies string[];
 
+const verifiedModelSlugs = new Set(['sample-mug', 'campaign-slogan-mug']);
+
 function assetRequirementsFor(mugId: string, slug: string): AssetRequirement[] {
   return [
     {
@@ -43,7 +45,7 @@ function assetRequirementsFor(mugId: string, slug: string): AssetRequirement[] {
       mugId,
       type: 'model',
       path: `/assets/archive/models/${slug}.glb`,
-      status: slug === 'sample-mug' ? 'verified' : 'needed',
+      status: verifiedModelSlugs.has(slug) ? 'verified' : 'needed',
       purpose: 'Lightweight GLB/GLTF mug model for the no-AR object detail viewer.',
     },
     {
@@ -186,6 +188,7 @@ export const archiveMugs: MugRecord[] = [
     markerPatternPath: '/assets/archive/markers/campaign-slogan-mug.patt',
     qrPath: '/assets/archive/qr/campaign-slogan-mug.svg',
     imagePath: '/assets/archive/images/campaign-slogan-mug.jpg',
+    modelPath: '/assets/archive/models/campaign-slogan-mug.glb',
     audioPath: '/assets/archive/audio/campaign-slogan-mug-projection.mp3',
     projectionAudioPath: '/assets/archive/audio/campaign-slogan-mug-projection.mp3',
     facts: [
