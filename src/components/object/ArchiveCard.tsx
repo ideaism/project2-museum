@@ -13,7 +13,9 @@ function ArchiveCard({ fragment, sources }: ArchiveCardProps) {
     .filter((source): source is ArchiveSource => Boolean(source));
 
   return (
-    <article className="object-fragment">
+    <article
+      className={`object-fragment object-fragment--${fragment.sourceType} object-fragment--${fragment.layer}`}
+    >
       <div className="object-fragment__meta">
         <SourceBadge type={fragment.sourceType} />
         <span className="object-fragment__layer">{fragment.layer}</span>

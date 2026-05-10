@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { layerSoundCaptions } from '../data/layerAudio';
 import type { LayerState } from '../types/archive';
+import type { PourInputStatus } from '../types/interaction';
 
 export type LayerAudioPaths = Partial<Record<LayerState, string>>;
 
@@ -8,6 +9,8 @@ interface UseLayerSoundOptions {
   layerState: LayerState;
   audioPaths: LayerAudioPaths;
   pourValue?: number;
+  inputStatus?: PourInputStatus;
+  inputConfidence?: number;
 }
 
 type AudioElementMap = Partial<Record<LayerState, HTMLAudioElement>>;
@@ -23,9 +26,9 @@ const layerLabels: Record<LayerState, string> = {
 };
 
 const generatedBaseGain: Record<LayerState, number> = {
-  surface: 0.1,
-  middle: 0.13,
-  core: 0.16,
+  surface: 0.12,
+  middle: 0.16,
+  core: 0.2,
 };
 
 function clamp(value: number) {
@@ -111,7 +114,81 @@ function canUseWebAudio() {
   return typeof window !== 'undefined' && 'AudioContext' in window;
 }
 
-export function useLayerSound({ layerState, audioPaths, pourValue = 0 }: UseLayerSoundOptions) {
+function getInputSoundScale(inputStatus: PourInputStatus, inputConfidence?: number) {
+  const confidence = typeof inputConfidence === 'number' ? clamp(inputConfidence) : 1;
+
+  if (inputStatus === 'tracking') {
+    return 0.78 + confidence * 0.34;
+  }
+
+  if (inputStatus === 'lowConfidence' || inputStatus === 'searching') {
+    return 0.38;
+  }
+
+  if (
+    inputStatus === 'permissionNeeded' ||
+    inputStatus === 'calibrating' ||
+    inputStatus === 'cameraStarting' ||
+    inputStatus === 'loadingModel'
+  ) {
+    return 0.42;
+  }
+
+  if (inputStatus === 'manualFallback') {
+    return 0.66;
+  }
+
+  if (inputStatus === 'failed' || inputStatus === 'unavailable' || inputStatus === 'idle') {
+    return 0.22;
+  }
+
+  return 0.5;
+}
+
+function getInputSoundNote(inputStatus: PourInputStatus, inputConfidence?: number) {
+  const confidenceText =
+    typeof inputConfidence === 'number'
+      ? ` Gesture confidence ${Math.round(clamp(inputConfidence) * 100)}%.`
+      : '';
+
+  if (inputStatus === 'tracking') {
+    return `Gesture pour is tracking; the information-flow sound follows the current layer intensity.${confidenceText}`;
+  }
+
+  if (inputStatus === 'lowConfidence') {
+    return `Gesture confidence is low, so the sound texture is damped.${confidenceText}`;
+  }
+
+  if (inputStatus === 'manualFallback') {
+    return 'Manual fallback is active; sound remains optional and follows the visible information flow.';
+  }
+
+  if (inputStatus === 'permissionNeeded') {
+    return 'Gesture permission is needed; the archive remains readable and silent controls stay available.';
+  }
+
+  if (inputStatus === 'calibrating' || inputStatus === 'cameraStarting' || inputStatus === 'loadingModel') {
+    return 'Gesture input is preparing; sound is held back until tracking stabilizes.';
+  }
+
+  if (inputStatus === 'searching') {
+    return 'Gesture input is searching; sound is damped while manual controls remain available.';
+  }
+
+  if (inputStatus === 'failed' || inputStatus === 'unavailable') {
+    return 'Gesture input is unavailable; sound can still be used with manual or tilt controls.';
+  }
+
+  return 'Sound remains optional and captioned.';
+}
+
+export function useLayerSound({
+  layerState,
+  audioPaths,
+  pourValue = 0,
+  inputStatus = 'manualFallback',
+  inputConfidence,
+}: UseLayerSoundOptions) {
   const audioRefs = useRef<AudioElementMap>({});
   const audioFadeRef = useRef<number | null>(null);
   const contextRef = useRef<AudioContext | null>(null);
@@ -128,7 +205,16 @@ export function useLayerSound({ layerState, audioPaths, pourValue = 0 }: UseLaye
 
   const activePath = audioPaths[layerState];
   const caption = layerSoundCaptions[layerState];
-  const intensity = useMemo(() => 0.24 + clamp(pourValue) * 0.76, [pourValue]);
+  const intensity = useMemo(
+    () =>
+      (0.18 + Math.pow(clamp(pourValue), 0.72) * 0.9) *
+      getInputSoundScale(inputStatus, inputConfidence),
+    [inputConfidence, inputStatus, pourValue],
+  );
+  const inputSoundNote = useMemo(
+    () => getInputSoundNote(inputStatus, inputConfidence),
+    [inputConfidence, inputStatus],
+  );
 
   const stopAudioFade = useCallback(() => {
     if (audioFadeRef.current !== null) {
@@ -217,7 +303,7 @@ export function useLayerSound({ layerState, audioPaths, pourValue = 0 }: UseLaye
               return;
             }
 
-            const targetVolume = !muted && layer === targetLayer ? 0.68 * nextIntensity : 0;
+            const targetVolume = !muted && layer === targetLayer ? 0.74 * nextIntensity : 0;
             const initialVolume = initialVolumes.get(audio) ?? 0;
             audio.volume = initialVolume + (targetVolume - initialVolume) * progress;
 
@@ -249,7 +335,7 @@ export function useLayerSound({ layerState, audioPaths, pourValue = 0 }: UseLaye
           void context.resume();
         }
 
-        masterGain.gain.setTargetAtTime(muted ? 0 : 0.72, context.currentTime, 0.08);
+        masterGain.gain.setTargetAtTime(muted ? 0 : 0.78, context.currentTime, 0.08);
         layers.forEach((layer) => {
           const layerGain = generatedGainsRef.current[layer];
           if (!layerGain) {
@@ -278,14 +364,16 @@ export function useLayerSound({ layerState, audioPaths, pourValue = 0 }: UseLaye
       if (muted) {
         setStatus('Sound wall muted. Visual layers remain active.');
       } else if (targetAudio && hasFilePlayback) {
-        setStatus(`${layerLabels[targetLayer]} audio file and generated texture are active.`);
+        setStatus(
+          `${layerLabels[targetLayer]} audio file and generated texture are active. ${inputSoundNote}`,
+        );
       } else if (context) {
-        setStatus(`${layerLabels[targetLayer]} generated sound texture is active.`);
+        setStatus(`${layerLabels[targetLayer]} generated sound texture is active. ${inputSoundNote}`);
       } else {
         setStatus('Web Audio is unavailable. Use the visual layer controls silently.');
       }
     },
-    [fadeAudioElements, hasFilePlayback],
+    [fadeAudioElements, hasFilePlayback, inputSoundNote],
   );
 
   const start = useCallback(() => {

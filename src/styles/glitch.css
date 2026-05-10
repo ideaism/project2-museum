@@ -77,16 +77,19 @@
   color: transparent;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
+  text-shadow: none;
 }
 
 .redacted-text::before {
   position: absolute;
-  inset: 0.08em -0.08em 0.02em;
-  border-radius: 1px;
+  inset: 0.16em -0.04em 0.08em;
+  border-radius: 2px;
   background:
-    linear-gradient(90deg, #0e0e0d, #25231f 42%, #0e0e0d 76%),
-    repeating-linear-gradient(90deg, transparent 0 10px, rgba(255, 255, 255, 0.08) 10px 12px);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.72);
+    linear-gradient(90deg, #0e0e0d, #24231f 46%, #11100f 78%),
+    repeating-linear-gradient(90deg, rgba(255, 253, 248, 0.08) 0 1px, transparent 1px 0.62rem);
+  box-shadow:
+    0 1px 0 rgba(255, 253, 248, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.62);
   content: '';
 }
 
@@ -97,7 +100,71 @@
   border-radius: inherit;
   opacity: 0;
   pointer-events: none;
-  animation: layer-static-cut 420ms steps(4, end);
+  animation: layer-static-cut 520ms steps(5, end);
+}
+
+.layer-transition::before {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: calc(10% + var(--pour-intensity) * 52%);
+  height: calc(0.16rem + var(--pour-intensity) * 0.42rem);
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 253, 248, 0.72) 0 0.7rem, transparent 0.7rem 1.1rem),
+    linear-gradient(90deg, rgba(11, 114, 133, 0.58), rgba(156, 49, 95, 0.52), transparent);
+  box-shadow:
+    0 calc(-0.95rem * var(--pour-intensity)) 0 rgba(11, 114, 133, 0.18),
+    0 calc(0.95rem * var(--pour-intensity)) 0 rgba(156, 49, 95, 0.16);
+  content: "";
+  opacity: calc(0.3 + var(--pour-intensity) * 0.5);
+  transform: skewY(-10deg) scaleX(calc(0.42 + var(--pour-intensity) * 0.58));
+  transform-origin: left center;
+  animation: layer-flow-scan 520ms steps(6, end);
+}
+
+.layer-transition::after {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: calc(18% + var(--pour-intensity) * 42%);
+  height: clamp(0.34rem, calc(var(--pour-intensity) * 1.9rem), 1.55rem);
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 253, 248, 0.62), transparent),
+    repeating-linear-gradient(90deg, rgba(11, 114, 133, 0.48) 0 0.36rem, rgba(156, 49, 95, 0.42) 0.36rem 0.72rem);
+  content: "";
+  filter: saturate(calc(0.8 + var(--gesture-confidence) * 0.5));
+  opacity: calc(0.22 + var(--pour-intensity) * 0.48);
+  transform: skewY(-8deg) scaleX(calc(0.34 + var(--pour-intensity) * 0.66));
+  transform-origin: left center;
+}
+
+.layer-transition[data-input-status="tracking"] {
+  animation-duration: 640ms;
+}
+
+.layer-transition[data-input-status="tracking"]::before,
+.layer-transition[data-input-status="tracking"]::after {
+  animation-duration: 640ms;
+}
+
+.layer-transition[data-input-status="lowConfidence"],
+.layer-transition[data-input-status="searching"] {
+  filter: grayscale(0.28);
+}
+
+.layer-transition[data-input-status="lowConfidence"]::after,
+.layer-transition[data-input-status="searching"]::after {
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 253, 248, 0.34) 0 0.28rem, transparent 0.28rem 0.62rem),
+    linear-gradient(90deg, rgba(156, 49, 95, 0.44), transparent);
+  opacity: calc(0.14 + var(--gesture-confidence) * 0.28);
+}
+
+.layer-transition[data-input-status="permissionNeeded"],
+.layer-transition[data-input-status="manualFallback"],
+.layer-transition[data-input-status="failed"],
+.layer-transition[data-input-status="unavailable"] {
+  animation-duration: 300ms;
 }
 
 .layer-transition--surface {
@@ -121,9 +188,9 @@
 
 .redacted-text::after {
   position: absolute;
-  inset: 48% -0.06em auto;
+  inset: 52% 0 auto;
   height: 1px;
-  background: rgba(255, 253, 248, 0.22);
+  background: rgba(255, 253, 248, 0.28);
   content: '';
 }
 
@@ -251,9 +318,33 @@
   }
 }
 
+@keyframes layer-flow-scan {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    transform: translateX(-0.9rem) skewY(-10deg) scaleX(calc(0.36 + var(--pour-intensity) * 0.58));
+  }
+
+  28% {
+    clip-path: inset(0 38% 0 0);
+  }
+
+  68% {
+    clip-path: inset(0 8% 0 0);
+    transform: translateX(0.7rem) skewY(-10deg) scaleX(calc(0.5 + var(--pour-intensity) * 0.7));
+  }
+
+  100% {
+    clip-path: inset(0 0 0 100%);
+    transform: translateX(1.3rem) skewY(-10deg) scaleX(calc(0.42 + var(--pour-intensity) * 0.58));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .glitch-text__copy,
   .glitch-text,
+  .layer-transition::before,
+  .layer-transition::after,
+  .layer-transition,
   .scanline-overlay::after {
     animation: none;
   }

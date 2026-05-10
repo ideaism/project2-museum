@@ -1,8 +1,14 @@
 import type { LayerState } from '../types/archive';
-import type { PourMappingInput } from '../types/interaction';
+import type { PourContentTransitionState, PourMappingInput } from '../types/pour';
 
 const DEFAULT_DEAD_ZONE_DEGREES = 4;
 const DEFAULT_FULL_POUR_DEGREES = 55;
+
+const layerPourAnchors: Record<LayerState, number> = {
+  surface: 0,
+  middle: 0.5,
+  core: 0.86,
+};
 
 export function clampPourValue(value: number) {
   if (!Number.isFinite(value)) {
@@ -24,6 +30,26 @@ export function mapPourValueToLayerState(pourValue: number): LayerState {
   }
 
   return 'core';
+}
+
+export function getPourValueForLayerState(layer: LayerState) {
+  return layerPourAnchors[layer];
+}
+
+export function mapPourValueToContentTransitionState(
+  pourValue: number,
+): PourContentTransitionState {
+  const normalized = clampPourValue(pourValue);
+
+  if (normalized >= 0.67) {
+    return 'spilling';
+  }
+
+  if (normalized > 0.08) {
+    return 'transitioning';
+  }
+
+  return 'settled';
 }
 
 export function mapDeviceOrientationToPourValue({

@@ -152,7 +152,10 @@ function Projection() {
 
                     <div className="projection-fragments">
                       {fragments.map((fragment) => (
-                        <section key={fragment.id} className="projection-fragment">
+                        <section
+                          key={fragment.id}
+                          className={`projection-fragment projection-fragment--${fragment.sourceType}`}
+                        >
                           <SourceBadge type={fragment.sourceType} />
                           <h4>{fragment.title}</h4>
                           <p>

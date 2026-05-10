@@ -133,6 +133,7 @@
 }
 
 .projection-fragment {
+  position: relative;
   display: grid;
   gap: 0.35rem;
   border-left: 3px solid var(--wall-accent);
@@ -140,7 +141,37 @@
 }
 
 .projection-fragment--visitor {
+  border-left-color: rgba(36, 69, 109, 0.78);
   border-left-style: double;
+  padding: 0.65rem 0.75rem 0.65rem 0.85rem;
+  background:
+    linear-gradient(90deg, rgba(36, 69, 109, 0.08), transparent 58%),
+    rgba(255, 253, 248, 0.5);
+}
+
+.projection-fragment--redacted {
+  overflow: hidden;
+  border-left-color: rgba(29, 28, 25, 0.8);
+  padding: 0.7rem 0.75rem 0.7rem 0.85rem;
+  background:
+    linear-gradient(90deg, rgba(29, 28, 25, 0.1), transparent 50%),
+    repeating-linear-gradient(180deg, transparent 0 1.05rem, rgba(29, 28, 25, 0.055) 1.05rem 1.12rem),
+    rgba(255, 253, 248, 0.52);
+}
+
+.projection-fragment--redacted::before {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(115deg, transparent 0 32%, rgba(29, 28, 25, 0.08) 32% 38%, transparent 38%),
+    repeating-linear-gradient(90deg, transparent 0 2rem, rgba(29, 28, 25, 0.04) 2rem 2.08rem);
+  content: "";
+  pointer-events: none;
+}
+
+.projection-fragment--redacted > * {
+  position: relative;
+  z-index: 1;
 }
 
 .projection-fragment--speculative {
@@ -555,14 +586,28 @@
 
 .shadow-fragment--visitorContribution {
   border-color: rgba(135, 185, 216, 0.52);
-  background: rgba(28, 73, 86, 0.72);
+  background:
+    linear-gradient(135deg, rgba(36, 69, 109, 0.8), rgba(28, 73, 86, 0.66)),
+    rgba(28, 73, 86, 0.72);
 }
 
 .shadow-fragment--redacted {
+  overflow: hidden;
   border-color: rgba(255, 250, 240, 0.3);
   background:
-    repeating-linear-gradient(90deg, rgba(255, 250, 240, 0.16) 0 0.65rem, transparent 0.65rem 1rem),
-    rgba(20, 19, 17, 0.8);
+    linear-gradient(135deg, rgba(255, 250, 240, 0.08), transparent 34%),
+    repeating-linear-gradient(180deg, transparent 0 1.15rem, rgba(255, 250, 240, 0.08) 1.15rem 1.2rem),
+    rgba(20, 19, 17, 0.84);
+}
+
+.shadow-fragment--redacted::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.22), transparent 36%),
+    repeating-linear-gradient(90deg, transparent 0 2.1rem, rgba(255, 250, 240, 0.055) 2.1rem 2.18rem);
+  content: "";
 }
 
 .shadow-fragment--speculation,
@@ -589,6 +634,17 @@
 .shadow-fragment .source-badge {
   border-color: rgba(255, 250, 240, 0.35);
   background: rgba(255, 250, 240, 0.94);
+}
+
+.shadow-fragment--redacted .source-badge {
+  border-color: rgba(255, 250, 240, 0.34);
+  background: rgba(255, 250, 240, 0.12);
+  color: #fffaf0;
+}
+
+.shadow-fragment--visitorContribution .source-badge {
+  background: rgba(255, 250, 240, 0.92);
+  color: #24456d;
 }
 
 .shadow-fragment__mug,

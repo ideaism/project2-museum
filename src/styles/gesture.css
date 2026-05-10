@@ -1,0 +1,585 @@
+.gesture-page {
+  --pour-value: 0;
+  --mug-rotation: 0deg;
+  --gesture-confidence: 0;
+}
+
+.gesture-page__hero,
+.gesture-source-legend,
+.gesture-instructions {
+  display: grid;
+  gap: 1rem;
+}
+
+.gesture-page__hero {
+  align-items: end;
+}
+
+.gesture-object-switcher {
+  display: grid;
+  gap: 0.55rem;
+  border: 1px solid rgba(29, 28, 25, 0.12);
+  border-radius: var(--radius-card);
+  padding: 0.6rem;
+  background:
+    linear-gradient(90deg, rgba(24, 63, 69, 0.07), transparent 58%),
+    var(--color-panel);
+}
+
+.gesture-object-switcher > span {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.gesture-object-switcher div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.gesture-object-switcher a {
+  border: 1px solid rgba(29, 28, 25, 0.14);
+  border-radius: 999px;
+  padding: 0.42rem 0.65rem;
+  background: rgba(255, 253, 248, 0.78);
+  color: var(--color-ink);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.gesture-object-switcher a.is-active {
+  border-color: var(--color-deep);
+  background: var(--color-deep);
+  color: white;
+}
+
+.gesture-page__hero h1 {
+  max-width: 17ch;
+  margin-bottom: 0.55rem;
+  font-size: clamp(2.5rem, 7vw, 4.8rem);
+  line-height: 0.96;
+}
+
+.gesture-pour-stage {
+  position: relative;
+  display: grid;
+  min-height: clamp(38rem, 70vw, 46rem);
+  overflow: hidden;
+  border: 1px solid rgba(29, 28, 25, 0.22);
+  border-radius: var(--radius-card);
+  background: #1d1c19;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 253, 248, 0.12),
+    0 22px 70px rgba(56, 48, 36, 0.2);
+  isolation: isolate;
+}
+
+.gesture-camera-backdrop,
+.gesture-camera-backdrop video,
+.gesture-camera-backdrop__idle {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.gesture-camera-backdrop {
+  z-index: 0;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255, 253, 248, 0.2), transparent 24%),
+    linear-gradient(135deg, rgba(24, 63, 69, 0.35), rgba(29, 28, 25, 0.88));
+}
+
+.gesture-camera-backdrop video {
+  object-fit: cover;
+  opacity: 0.48;
+  filter: blur(1.5px) saturate(0.64) contrast(1.08);
+  transform: scaleX(-1) scale(1.03);
+}
+
+.gesture-camera-backdrop__idle {
+  display: block;
+  background:
+    linear-gradient(rgba(255, 253, 248, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 253, 248, 0.055) 1px, transparent 1px),
+    radial-gradient(circle at 50% 38%, rgba(255, 253, 248, 0.18), transparent 17rem);
+  background-size: 2rem 2rem, 2rem 2rem, auto;
+}
+
+.gesture-pour-stage::before,
+.gesture-pour-stage::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.gesture-pour-stage::before {
+  z-index: 2;
+  background:
+    linear-gradient(108deg, rgba(255, 253, 248, 0.2), transparent 26%),
+    linear-gradient(284deg, rgba(255, 253, 248, 0.18), transparent 34%),
+    radial-gradient(circle at 50% 42%, rgba(255, 253, 248, 0.16), transparent 24rem),
+    rgba(239, 229, 210, calc(0.18 + var(--pour-value) * 0.08));
+  mix-blend-mode: screen;
+}
+
+.gesture-pour-stage::after {
+  z-index: 3;
+  border: 1px solid rgba(255, 253, 248, 0.28);
+  border-radius: calc(var(--radius-card) - 2px);
+  margin: clamp(0.65rem, 1.5vw, 1rem);
+  background:
+    repeating-linear-gradient(180deg, transparent 0 2rem, rgba(255, 253, 248, 0.08) 2rem 2.08rem),
+    linear-gradient(180deg, transparent 60%, rgba(29, 28, 25, 0.34));
+}
+
+.gesture-pour-stage .archive-texture {
+  z-index: 1;
+}
+
+.gesture-pour-stage .scanline-overlay {
+  z-index: 4;
+}
+
+.mug-pour-object {
+  position: absolute;
+  left: 43%;
+  top: 43%;
+  z-index: 6;
+  width: min(43vw, 23rem);
+  min-width: 13rem;
+  transform:
+    translate(-50%, -50%)
+    rotate(calc(var(--mug-rotation) * -0.74))
+    translateY(calc(var(--pour-value) * -1.2rem));
+  transform-origin: 58% 42%;
+  transition: transform 220ms ease;
+}
+
+.mug-pour-object img,
+.mug-pour-object__fallback {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter:
+    drop-shadow(0 1.4rem 1.2rem rgba(0, 0, 0, 0.34))
+    drop-shadow(0 0 1.4rem rgba(255, 253, 248, 0.16));
+}
+
+.mug-pour-object__fallback {
+  aspect-ratio: 0.82;
+  border: 2px solid rgba(255, 253, 248, 0.74);
+  border-radius: 999px 999px 10px 10px;
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.94), rgba(231, 224, 211, 0.86));
+}
+
+.mug-pour-object__stream {
+  position: absolute;
+  left: 76%;
+  top: 20%;
+  width: calc(2.8rem + var(--pour-value) * 20rem);
+  height: calc(0.36rem + var(--pour-value) * 1.05rem);
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, rgba(255, 253, 248, 0.84), rgba(255, 253, 248, 0.1) 18%, transparent 72%),
+    repeating-linear-gradient(90deg, rgba(11, 114, 133, 0.76) 0 0.5rem, rgba(156, 49, 95, 0.7) 0.5rem 0.92rem, rgba(255, 253, 248, 0.58) 0.92rem 1.08rem),
+    rgba(255, 253, 248, 0.24);
+  box-shadow:
+    0 0 1.2rem rgba(255, 253, 248, 0.28),
+    0 0 2.6rem rgba(11, 114, 133, 0.28),
+    0 0 3.2rem rgba(156, 49, 95, 0.18);
+  opacity: calc(var(--pour-value) * 0.95);
+  transform: rotate(12deg);
+  transform-origin: left center;
+}
+
+.mug-pour-object__stream::before,
+.mug-pour-object__stream::after {
+  position: absolute;
+  content: "";
+  pointer-events: none;
+}
+
+.mug-pour-object__stream::before {
+  inset: -0.35rem 0;
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 0.9rem, rgba(255, 253, 248, 0.34) 0.9rem 1.12rem),
+    linear-gradient(90deg, rgba(255, 253, 248, 0.28), transparent 72%);
+  filter: blur(0.16rem);
+  opacity: calc(0.16 + var(--pour-value) * 0.64);
+}
+
+.mug-pour-object__stream::after {
+  left: 4%;
+  right: -7%;
+  top: 50%;
+  height: 0.18rem;
+  background:
+    radial-gradient(circle, rgba(255, 253, 248, 0.76) 0 0.12rem, transparent 0.14rem),
+    radial-gradient(circle, rgba(11, 114, 133, 0.58) 0 0.1rem, transparent 0.12rem),
+    radial-gradient(circle, rgba(156, 49, 95, 0.55) 0 0.11rem, transparent 0.13rem);
+  background-position: 0 0, 1.2rem 0, 2.2rem 0;
+  background-size: 3.2rem 100%;
+  opacity: calc(var(--pour-value) * 0.74);
+  transform: translateY(-50%);
+}
+
+.info-flow-overlay {
+  position: absolute;
+  inset: 1rem;
+  z-index: 7;
+  pointer-events: none;
+}
+
+.info-flow-overlay__fragment {
+  position: absolute;
+  left: calc(42% + var(--pour-value) * 28%);
+  top: calc(16% + var(--fragment-index) * 4.1rem + var(--pour-value) * 12%);
+  max-width: min(36vw, 17rem);
+  border: 1px solid rgba(29, 28, 25, 0.18);
+  border-radius: 3px;
+  padding: 0.38rem 0.55rem;
+  background: rgba(255, 253, 248, 0.9);
+  color: var(--color-ink);
+  font-size: clamp(0.76rem, 1.6vw, 0.92rem);
+  font-weight: 850;
+  line-height: 1.15;
+  box-shadow:
+    0.16rem 0 0 rgba(11, 114, 133, 0.24),
+    -0.16rem 0 0 rgba(156, 49, 95, 0.22),
+    0 0.5rem 1.2rem rgba(0, 0, 0, 0.18),
+    0 0 1.2rem rgba(255, 253, 248, calc(var(--pour-value) * 0.2));
+  transform:
+    translateX(calc(var(--pour-value) * 4.2rem))
+    translateY(calc(var(--pour-value) * 2.2rem))
+    rotate(calc(-3deg + var(--fragment-index) * 1.8deg));
+  transition:
+    opacity 180ms ease,
+    transform 220ms ease;
+}
+
+.info-flow-overlay__fragment--middle {
+  border-color: rgba(156, 49, 95, 0.36);
+  background: rgba(255, 247, 232, 0.92);
+}
+
+.info-flow-overlay__fragment--core {
+  border-color: rgba(29, 28, 25, 0.58);
+  background:
+    repeating-linear-gradient(90deg, rgba(29, 28, 25, 0.12) 0 0.8rem, transparent 0.8rem 1.1rem),
+    rgba(255, 253, 248, 0.9);
+}
+
+.gesture-status-hud {
+  position: absolute;
+  left: clamp(1rem, 2vw, 1.25rem);
+  top: clamp(1rem, 2vw, 1.25rem);
+  z-index: 9;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+  width: min(26rem, calc(100% - 2rem));
+  color: white;
+}
+
+.gesture-status-hud span {
+  border: 1px solid rgba(255, 253, 248, 0.34);
+  border-radius: 999px;
+  padding: 0.34rem 0.56rem;
+  background: rgba(29, 28, 25, 0.62);
+  font-size: 0.78rem;
+  font-weight: 850;
+  backdrop-filter: blur(8px);
+}
+
+.gesture-status-hud__status {
+  background: rgba(24, 63, 69, 0.72);
+}
+
+.gesture-pour-stage[data-input-status="searching"] .gesture-status-hud__status,
+.gesture-pour-stage[data-input-status="lowConfidence"] .gesture-status-hud__status,
+.gesture-pour-stage[data-input-status="failed"] .gesture-status-hud__status {
+  background: rgba(139, 47, 47, 0.78);
+}
+
+.gesture-pour-stage[data-input-status="tracking"] .mug-pour-object__stream {
+  box-shadow:
+    0 0 1.4rem rgba(255, 253, 248, 0.36),
+    0 0 3rem rgba(11, 114, 133, calc(0.28 + var(--gesture-confidence) * 0.2)),
+    0 0 3.8rem rgba(156, 49, 95, calc(0.18 + var(--gesture-confidence) * 0.16));
+}
+
+.gesture-pour-stage[data-input-status="lowConfidence"] .mug-pour-object__stream,
+.gesture-pour-stage[data-input-status="searching"] .mug-pour-object__stream {
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 253, 248, 0.58) 0 0.38rem, transparent 0.38rem 0.78rem),
+    linear-gradient(90deg, rgba(139, 47, 47, 0.62), transparent 70%);
+  opacity: calc(var(--pour-value) * 0.62);
+}
+
+.gesture-layer-card {
+  position: absolute;
+  left: clamp(1rem, 2vw, 1.25rem);
+  bottom: clamp(6.8rem, 10vw, 8.2rem);
+  z-index: 8;
+  display: grid;
+  gap: 0.5rem;
+  width: min(37rem, calc(100% - 2rem));
+  border: 1px solid rgba(29, 28, 25, 0.22);
+  border-radius: calc(var(--radius-card) - 2px);
+  padding: 0.85rem;
+  background: rgba(255, 253, 248, 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1rem 2.4rem rgba(0, 0, 0, 0.2);
+}
+
+.gesture-layer-card h2,
+.gesture-layer-card p {
+  margin-bottom: 0;
+}
+
+.gesture-layer-card__header,
+.gesture-source-legend__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.gesture-layer-card__header {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gesture-pour-stage__bottom {
+  position: absolute;
+  left: clamp(1rem, 2vw, 1.25rem);
+  right: clamp(1rem, 2vw, 1.25rem);
+  bottom: clamp(1rem, 2vw, 1.25rem);
+  z-index: 9;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.gesture-stage-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.gesture-stage-controls .button-link,
+.pour-fallback-controls {
+  backdrop-filter: blur(10px);
+}
+
+.gesture-stage-controls .button-link {
+  min-height: 2.35rem;
+  border-color: rgba(255, 253, 248, 0.42);
+  background: rgba(255, 253, 248, 0.86);
+}
+
+.gesture-stage-controls .button-link.primary {
+  border-color: rgba(110, 31, 40, 0.92);
+  background: rgba(110, 31, 40, 0.92);
+}
+
+.pour-fallback-controls {
+  display: grid;
+  grid-template-columns: auto minmax(10rem, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid rgba(255, 253, 248, 0.38);
+  border-radius: calc(var(--radius-card) - 2px);
+  padding: 0.56rem 0.65rem;
+  background: rgba(255, 253, 248, 0.86);
+  color: var(--color-ink);
+}
+
+.pour-fallback-controls__readout {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+.pour-fallback-controls__readout span,
+.pour-fallback-controls__layers button {
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.pour-fallback-controls__slider input {
+  width: 100%;
+  accent-color: var(--color-accent-strong);
+}
+
+.pour-fallback-controls__layers {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.pour-fallback-controls__layers button {
+  border: 1px solid rgba(29, 28, 25, 0.18);
+  border-radius: 999px;
+  padding: 0.35rem 0.52rem;
+  background: rgba(255, 253, 248, 0.76);
+  color: var(--color-ink);
+}
+
+.pour-fallback-controls__layers button.is-active {
+  border-color: var(--color-deep);
+  background: var(--color-deep);
+  color: white;
+}
+
+.gesture-pour-stage__error {
+  position: absolute;
+  right: 1rem;
+  top: 4.5rem;
+  z-index: 10;
+  max-width: min(24rem, calc(100% - 2rem));
+  border-left: 3px solid var(--color-accent-strong);
+  padding: 0.7rem;
+  background: rgba(255, 253, 248, 0.92);
+  color: var(--color-accent-strong);
+}
+
+.research-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid rgba(29, 28, 25, 0.22);
+  border-radius: 2px;
+  padding: 0.32rem 0.5rem;
+  background: rgba(255, 253, 248, 0.82);
+  color: var(--color-ink);
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
+}
+
+.research-badge--fact,
+.research-badge--visible-evidence {
+  border-color: rgba(24, 63, 69, 0.44);
+  color: var(--color-deep);
+}
+
+.research-badge--historical-context,
+.research-badge--inference {
+  border-color: rgba(93, 68, 32, 0.42);
+  color: #5d4420;
+}
+
+.research-badge--speculation,
+.research-badge--unresolved {
+  border-color: rgba(139, 47, 47, 0.45);
+  color: var(--color-accent-strong);
+}
+
+.research-badge--redacted {
+  border-color: rgba(29, 28, 25, 0.72);
+  background: #1d1c19;
+  color: white;
+}
+
+.research-badge--visitor-contribution,
+.research-badge--visitorContribution {
+  border-color: rgba(11, 114, 133, 0.48);
+  color: #0b5360;
+}
+
+.gesture-source-legend,
+.gesture-instructions {
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-card);
+  padding: 1rem;
+  background: var(--color-panel);
+}
+
+.gesture-source-legend h2,
+.gesture-instructions h2,
+.gesture-instructions p,
+.gesture-instructions ul {
+  margin-bottom: 0;
+}
+
+.gesture-instructions ul {
+  display: grid;
+  gap: 0.45rem;
+  padding-left: 1.1rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (min-width: 900px) {
+  .gesture-page__hero {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .gesture-page__hero h1 {
+    max-width: 11ch;
+    font-size: clamp(2.4rem, 15vw, 4.2rem);
+  }
+
+  .gesture-pour-stage {
+    min-height: 44rem;
+  }
+
+  .mug-pour-object {
+    left: 50%;
+    top: 37%;
+    width: min(74vw, 18rem);
+    transform:
+      translate(-50%, -50%)
+      rotate(calc(var(--mug-rotation) * -0.68))
+      translateY(calc(var(--pour-value) * -0.8rem));
+  }
+
+  .info-flow-overlay__fragment {
+    left: calc(16% + var(--pour-value) * 25%);
+    top: calc(24% + var(--fragment-index) * 3.35rem + var(--pour-value) * 8%);
+    max-width: 74vw;
+  }
+
+  .gesture-layer-card {
+    bottom: 11rem;
+  }
+
+  .gesture-stage-controls .button-link {
+    min-height: 2.2rem;
+    padding-inline: 0.62rem;
+  }
+
+  .pour-fallback-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .pour-fallback-controls__readout,
+  .pour-fallback-controls__layers {
+    justify-content: space-between;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mug-pour-object,
+  .info-flow-overlay__fragment {
+    transition: none;
+  }
+}

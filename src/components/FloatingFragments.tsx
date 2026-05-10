@@ -54,7 +54,7 @@ function FloatingFragments({ fragments, paused = false }: FloatingFragmentsProps
             {fragment.sourceType === 'redacted' ? (
               <>
                 <RedactedText text={fragment.text} layerState={fragment.layer} />{' '}
-                <span className="shadow-fragment__note">redaction visible</span>
+                <span className="shadow-fragment__note">right to opacity</span>
               </>
             ) : (
               fragment.text

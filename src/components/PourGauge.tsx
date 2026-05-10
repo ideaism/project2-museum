@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { LayerState } from '../types/archive';
-import type { DeviceTiltState } from '../types/interaction';
+import type { PourInputStatus, PourInteractionState } from '../types/interaction';
+import { getPourValueForLayerState } from '../utils/pourMapping';
 
 const layerLabels = {
   surface: 'Surface',
@@ -9,10 +10,31 @@ const layerLabels = {
 } as const;
 
 export interface PourGaugeProps {
-  tilt: DeviceTiltState & { setLayerState?: (layer: LayerState) => void };
+  tilt: PourInteractionState;
   label?: string;
   description?: string;
 }
+
+const inputSourceLabels: Record<PourInteractionState['inputSource'], string> = {
+  slider: 'Slider',
+  keyboard: 'Keyboard',
+  'device-tilt': 'Device tilt',
+  gesture: 'Camera gesture',
+};
+
+const inputStatusLabels: Record<PourInputStatus, string> = {
+  idle: 'Input idle',
+  manualFallback: 'Manual fallback active',
+  permissionNeeded: 'Permission needed',
+  calibrating: 'Calibrating input',
+  cameraStarting: 'Starting camera input',
+  loadingModel: 'Loading input model',
+  tracking: 'Input tracking',
+  searching: 'Searching for input',
+  lowConfidence: 'Low confidence',
+  failed: 'Input failed',
+  unavailable: 'Input unavailable',
+};
 
 function PourGauge({
   tilt,
@@ -21,31 +43,42 @@ function PourGauge({
 }: PourGaugeProps) {
   const percentage = Math.round(tilt.pourValue * 100);
   const updateManualPourValue = (value: string) => {
-    tilt.setManualPourValue(Number(value) / 100);
+    tilt.setSliderPourValue(Number(value) / 100);
   };
   const chooseLayer = (layer: LayerState) => {
-    if (tilt.setLayerState) {
-      tilt.setLayerState(layer);
-      return;
-    }
-
-    tilt.setManualPourValue(layer === 'surface' ? 0 : layer === 'middle' ? 0.5 : 0.86);
+    tilt.setSliderPourValue(getPourValueForLayerState(layer));
   };
   const showPermissionButton =
     tilt.isSupported &&
-    tilt.inputSource !== 'sensor' &&
+    tilt.inputSource !== 'device-tilt' &&
     (tilt.permissionState === 'prompt' || tilt.permissionState === 'granted');
-  const fallbackReason =
-    tilt.permissionState === 'denied'
-      ? 'Sensor permission was denied. Manual control is active.'
-      : tilt.permissionState === 'unavailable'
-        ? 'Device orientation is unavailable here. Manual control is active.'
-        : tilt.inputSource === 'manual'
-          ? 'Manual control is active for preview and keyboard access.'
-          : 'Sensor control is active.';
+  const inputStatus = inputStatusLabels[tilt.inputStatus];
+  const confidenceText =
+    typeof tilt.inputConfidence === 'number'
+      ? ` Confidence ${Math.round(tilt.inputConfidence * 100)}%.`
+      : '';
+  const inputConfidence = Math.min(1, Math.max(0, tilt.inputConfidence ?? 0));
+  const externalStatusText =
+    tilt.externalInput && tilt.externalInput.source !== tilt.inputSource && tilt.externalInput.status
+      ? ` ${inputSourceLabels[tilt.externalInput.source]} input: ${
+          inputStatusLabels[tilt.externalInput.status]
+        }.`
+      : '';
+  const fallbackReason = `${inputSourceLabels[tilt.inputSource]} input: ${inputStatus}.${confidenceText}${externalStatusText}`;
 
   return (
-    <section className="pour-gauge" aria-labelledby="pour-gauge-title">
+    <section
+      className="pour-gauge"
+      data-input-source={tilt.inputSource}
+      data-input-status={tilt.inputStatus}
+      style={
+        {
+          '--pour-value': String(tilt.pourValue),
+          '--input-confidence': String(inputConfidence),
+        } as CSSProperties
+      }
+      aria-labelledby="pour-gauge-title"
+    >
       <div className="pour-gauge__header">
         <div>
           <p className="eyebrow">Pour interaction</p>
@@ -71,10 +104,18 @@ function PourGauge({
       <div
         className="pour-gauge__meter"
         aria-hidden="true"
-        style={{ '--pour-value': String(tilt.pourValue) } as CSSProperties}
       >
         <span />
       </div>
+
+      {typeof tilt.inputConfidence === 'number' ? (
+        <div
+          className="pour-gauge__confidence"
+          aria-label={`Input confidence ${Math.round(inputConfidence * 100)}%`}
+        >
+          <span />
+        </div>
+      ) : null}
 
       <div className="pour-gauge__readout" aria-live="polite">
         <strong>{percentage}% poured</strong>
@@ -104,6 +145,7 @@ function PourGauge({
             className={layer === tilt.layerState ? 'is-active' : undefined}
             type="button"
             aria-pressed={layer === tilt.layerState}
+            data-pour-value={getPourValueForLayerState(layer)}
             onClick={() => chooseLayer(layer)}
           >
             {layerLabels[layer]}

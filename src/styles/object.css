@@ -1005,6 +1005,38 @@
   margin-bottom: 0;
 }
 
+.object-fragment--redacted {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(29, 28, 25, 0.2);
+  background:
+    linear-gradient(90deg, rgba(29, 28, 25, 0.07), transparent 44%),
+    repeating-linear-gradient(180deg, transparent 0 1.15rem, rgba(29, 28, 25, 0.045) 1.15rem 1.22rem),
+    var(--color-panel);
+}
+
+.object-fragment--redacted::before {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(29, 28, 25, 0.11), transparent 34%),
+    repeating-linear-gradient(90deg, transparent 0 2.2rem, rgba(29, 28, 25, 0.035) 2.2rem 2.28rem);
+  content: "";
+  pointer-events: none;
+}
+
+.object-fragment--redacted > * {
+  position: relative;
+  z-index: 1;
+}
+
+.object-fragment--visitorContribution {
+  border-color: rgba(36, 69, 109, 0.22);
+  background:
+    linear-gradient(90deg, rgba(36, 69, 109, 0.08), transparent 44%),
+    var(--color-panel);
+}
+
 .object-fragment__layer {
   color: var(--color-muted);
   font-size: 0.78rem;
@@ -1077,14 +1109,16 @@
 }
 
 .source-badge--visitorContribution {
-  border-color: rgba(59, 86, 120, 0.35);
+  border-color: rgba(36, 69, 109, 0.34);
+  background: rgba(244, 248, 251, 0.95);
   color: #24456d;
 }
 
 .source-badge--redacted {
-  border-color: rgba(29, 28, 25, 0.5);
-  background: #1d1c19;
-  color: white;
+  border-color: rgba(29, 28, 25, 0.38);
+  background:
+    linear-gradient(90deg, rgba(29, 28, 25, 0.92), rgba(45, 43, 38, 0.92));
+  color: #fffdf8;
 }
 
 .object-installation-links {

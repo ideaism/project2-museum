@@ -11,6 +11,25 @@
   box-shadow: inset 0 0.45rem 0 rgba(29, 28, 25, 0.035);
 }
 
+.sound-manager[data-input-status="tracking"] {
+  border-color: rgba(24, 63, 69, 0.36);
+}
+
+.sound-manager[data-input-status="lowConfidence"],
+.sound-manager[data-input-status="searching"] {
+  border-color: rgba(139, 47, 47, 0.38);
+  background:
+    repeating-linear-gradient(135deg, rgba(139, 47, 47, 0.08) 0 1px, transparent 1px 0.85rem),
+    linear-gradient(180deg, rgba(255, 253, 248, 0.9), rgba(239, 229, 210, 0.78));
+}
+
+.sound-manager[data-input-status="manualFallback"],
+.sound-manager[data-input-status="permissionNeeded"],
+.sound-manager[data-input-status="failed"],
+.sound-manager[data-input-status="unavailable"] {
+  border-style: dashed;
+}
+
 .sound-manager h2 {
   margin-bottom: 0.35rem;
 }

@@ -9,19 +9,31 @@ Use this checklist during final preparation. Mark an item complete only after ch
 - [ ] `npm run preview` serves the built app.
 - [ ] `npm run test` passes, if a test script has been added.
 - [ ] `npm run lint` passes, if a lint script has been added.
-- [ ] Browser console has no route-load errors on `/`, `/object/sample-mug`, `/ar/sample-mug`, `/projection`, and `/about`.
+- [ ] Browser console has no route-load errors on `/`, `/gesture/sample-mug`, `/object/sample-mug`, `/projection`, and `/about`.
 
 ## Routes
 
-- [ ] `/` loads and links to the AR and no-AR object paths.
+- [ ] `/` loads and links to the gesture and no-camera object paths.
+- [ ] `/gesture/sample-mug` loads and shows gesture status.
+- [ ] `/gesture/campaign-slogan-mug` loads for the Labour mug.
+- [ ] `/gesture/commemorative-protest-mug` loads for the People's March for Jobs mug.
+- [ ] `/ar/sample-mug` redirects or clearly points to gesture mode as a legacy compatibility path.
 - [ ] `/object/sample-mug` loads without camera permission.
 - [ ] `/object/campaign-slogan-mug` loads without camera permission.
 - [ ] `/object/commemorative-protest-mug` loads without camera permission.
-- [ ] Unknown `/object/:id` routes show a useful not-found state.
-- [ ] `/ar/sample-mug` loads and shows camera permission state before AR starts.
-- [ ] Unknown `/ar/:id` routes show a useful not-found state.
+- [ ] Unknown `/object/:id` and `/gesture/:id` routes show useful not-found states.
 - [ ] `/projection` loads without camera or motion permission.
-- [ ] `/about` explains the project, source limits, redaction principle, and AI process.
+- [ ] `/about` explains gesture-pour direction, ethics, source limits, redaction principle, AI process, and current limits.
+
+## Camera Gesture
+
+- [ ] `/gesture/sample-mug` starts the gesture camera from a user button press.
+- [ ] Hand rotation controls `pourValue`.
+- [ ] Gesture tracking state is readable: searching, low confidence, tracking, unavailable, or failed.
+- [ ] Gesture mode states that camera processing is local only.
+- [ ] No video recording or uploading is implied.
+- [ ] No microphone access is requested.
+- [ ] Manual fallback remains available when camera or gesture tracking fails.
 
 ## Mobile and Fallbacks
 
@@ -29,10 +41,8 @@ Use this checklist during final preparation. Mark an item complete only after ch
 - [ ] Header navigation wraps without covering page content.
 - [ ] Object page manual pour slider changes between `surface`, `middle`, and `core`.
 - [ ] Layer buttons change between `surface`, `middle`, and `core`.
-- [ ] AR route offers a no-camera fallback link.
-- [ ] Camera denied, unsupported, marker-missing, and AR script failure states remain readable.
-- [ ] Tilt interaction changes layers on supported devices.
-- [ ] Manual controls remain available when motion sensors are unavailable.
+- [ ] Camera denied or unsupported states remain readable and actionable.
+- [ ] Manual controls remain available when motion sensors or camera are unavailable.
 
 ## Annotations
 
@@ -50,6 +60,7 @@ Use this checklist during final preparation. Mark an item complete only after ch
 - [ ] Every narrative fragment displays a source label.
 - [ ] Facts, inference, speculation, visitor contribution, and redaction are visually distinguishable.
 - [ ] Placeholder object metadata is not presented as verified museum data.
+- [ ] Gesture tracking data is not presented as historical evidence.
 - [ ] Redacted or unresolved material remains visible as a valid archive state.
 - [ ] Visitor memory is not presented as institutional fact.
 - [ ] Right-to-opacity is included in `/about` and relevant documentation.

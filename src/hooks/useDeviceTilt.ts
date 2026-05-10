@@ -42,7 +42,7 @@ export function useDeviceTilt(initialPourValue = 0): DeviceTiltState {
   const [pourValue, setPourValue] = useState(() => clampPourValue(initialPourValue));
   const [permissionState, setPermissionState] =
     useState<TiltPermissionState>(getInitialPermissionState);
-  const [inputSource, setInputSource] = useState<PourInputSource>('manual');
+  const [inputSource, setInputSource] = useState<PourInputSource>('slider');
   const orientationBaselineRef = useRef<OrientationBaseline | null>(null);
   const hasSensorEventRef = useRef(false);
   const isSupported = canUseDeviceOrientation();
@@ -52,7 +52,7 @@ export function useDeviceTilt(initialPourValue = 0): DeviceTiltState {
 
     if (!OrientationEvent) {
       setPermissionState('unavailable');
-      setInputSource('manual');
+      setInputSource('slider');
       return 'unavailable';
     }
 
@@ -61,7 +61,7 @@ export function useDeviceTilt(initialPourValue = 0): DeviceTiltState {
 
     if (typeof OrientationEvent.requestPermission !== 'function') {
       setPermissionState('granted');
-      setInputSource('sensor');
+      setInputSource('device-tilt');
       return 'granted';
     }
 
@@ -70,22 +70,29 @@ export function useDeviceTilt(initialPourValue = 0): DeviceTiltState {
       const nextState: TiltPermissionState =
         result === 'granted' ? 'granted' : 'denied';
       setPermissionState(nextState);
-      setInputSource(nextState === 'granted' ? 'sensor' : 'manual');
+      setInputSource(nextState === 'granted' ? 'device-tilt' : 'slider');
       return nextState;
     } catch {
       setPermissionState('denied');
-      setInputSource('manual');
+      setInputSource('slider');
       return 'denied';
     }
   }, []);
 
-  const setManualPourValue = useCallback((value: number) => {
-    setInputSource('manual');
+  const setPourValueFromSource = useCallback((value: number, source: PourInputSource) => {
+    setInputSource(source);
     setPourValue(clampPourValue(value));
   }, []);
 
+  const setManualPourValue = useCallback(
+    (value: number) => {
+      setPourValueFromSource(value, 'slider');
+    },
+    [setPourValueFromSource],
+  );
+
   useEffect(() => {
-    if (!isSupported || permissionState !== 'granted' || inputSource !== 'sensor') {
+    if (!isSupported || permissionState !== 'granted' || inputSource !== 'device-tilt') {
       return undefined;
     }
 
@@ -115,7 +122,7 @@ export function useDeviceTilt(initialPourValue = 0): DeviceTiltState {
     const unavailableTimer = window.setTimeout(() => {
       if (!hasSensorEventRef.current) {
         setPermissionState('unavailable');
-        setInputSource('manual');
+        setInputSource('slider');
       }
     }, 2500);
 
@@ -138,6 +145,7 @@ export function useDeviceTilt(initialPourValue = 0): DeviceTiltState {
     requestPermission,
     isSupported,
     setManualPourValue,
+    setPourValueFromSource,
     inputSource,
   };
 }

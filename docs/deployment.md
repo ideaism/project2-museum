@@ -9,7 +9,7 @@ npm install
 npm run build
 ```
 
-Camera access for the AR route requires `localhost` during development or HTTPS in production. Do not demo live camera AR from an insecure remote origin.
+Camera access for gesture mode requires `localhost` during development or HTTPS in production. Do not demo `/gesture/:id` from an insecure remote origin.
 
 ## Vercel
 
@@ -20,7 +20,7 @@ Recommended for the final prototype because it gives HTTPS by default.
 3. Use build command `npm run build`.
 4. Use output directory `dist`.
 5. Deploy.
-6. Test `/`, `/object/sample-mug`, `/ar/sample-mug`, `/projection`, and `/about` on the deployed HTTPS URL.
+6. Test `/`, `/gesture/sample-mug`, `/object/sample-mug`, `/projection`, and `/about` on the deployed HTTPS URL.
 
 If direct route refreshes fail, add a SPA rewrite in `vercel.json`:
 
@@ -54,20 +54,19 @@ React Router routes need a static-host fallback to `index.html`. If Pages cannot
 
 Public files should be placed under `public/` so Vite copies them into `dist/` unchanged. The current planned asset paths include:
 
-- `/assets/archive/images/*.jpg`
-- `/assets/archive/markers/*.patt`
-- `/assets/archive/qr/*.svg`
+- `/assets/archive/images/*.png`
+- `/assets/archive/models/*.glb`
 - `/assets/archive/audio/*.mp3`
-- `/assets/archive/audio/projection-surface.mp3`, `/assets/archive/audio/projection-middle.mp3`, `/assets/archive/audio/projection-core.mp3` for optional projection layer audio
+- optional `/assets/archive/qr/*.svg` files that link to gesture or object routes
 
-After deployment, open the marker and audio URLs directly to confirm they return `200`.
+Legacy marker files may remain under `/assets/archive/markers/`, but they are not required for the current Camera Gesture Pour Experience.
 
 ## Final Deployment Smoke Test
 
 - [ ] Production site loads on HTTPS.
-- [ ] `/object/sample-mug` works after a hard refresh.
+- [ ] `/gesture/sample-mug` loads after a hard refresh.
+- [ ] Gesture camera can start on the target assessment device.
+- [ ] Hand rotation changes the pour layer when tracking confidence is sufficient.
+- [ ] `/object/sample-mug` works after a hard refresh and without camera permission.
 - [ ] `/projection` works after a hard refresh.
-- [ ] `/ar/sample-mug` shows a camera request state.
-- [ ] Camera permission denied state links to the object fallback.
-- [ ] Missing marker assets are reported clearly.
 - [ ] LocalStorage annotations save and clear on the deployed site.

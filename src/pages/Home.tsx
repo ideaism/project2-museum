@@ -10,21 +10,21 @@ function Home() {
   return (
     <section className="page-section hero-section" aria-labelledby="home-title">
       <div className="content-stack">
-        <p className="eyebrow">Mobile WebAR museum prototype</p>
+        <p className="eyebrow">Camera gesture museum prototype</p>
         <GlitchText as="h1" id="home-title" layerState="middle">
           A mobile-first archive for political ceramic mugs.
         </GlitchText>
         <p className="lead">
-          Scan a cup marker, tilt the phone as if pouring, or use the no-camera
-          walkthrough to reveal surface facts, middle readings, and core redactions or
-          visitor memory.
+          Use the camera as a local gesture sensor: hold a hand as if holding a mug,
+          rotate as if pouring, or use the no-camera walkthrough to reveal surface
+          facts, middle readings, and core redactions or visitor memory.
         </p>
         <div className="action-row" aria-label="Prototype entry points">
-          <Link className="button-link primary" to={`/object/${featuredMug.slug}`}>
-            Start no-AR walkthrough
+          <Link className="button-link primary" to={`/gesture/${featuredMug.slug}`}>
+            Start gesture pour
           </Link>
-          <Link className="button-link" to={`/ar/${featuredMug.slug}`}>
-            Open AR marker route
+          <Link className="button-link" to={`/object/${featuredMug.slug}`}>
+            Open no-camera walkthrough
           </Link>
           <Link className="button-link" to="/projection">
             Open projection wall
@@ -36,8 +36,8 @@ function Home() {
         <p className="eyebrow">Installation system</p>
         <h2 id="home-featured-title">{featuredMug.title}</h2>
         <p>
-          Physical cup plus QR/AR marker, mobile layer walkthrough, local annotation
-          prompt, and projection mode share the same mug record.
+          Physical cup, camera gesture route, no-camera layer walkthrough, local
+          annotation prompt, and projection mode share the same mug record.
         </p>
         <div className="archive-card__layers" aria-label="Narrative layers">
           <GlitchBadge layerState="surface">surface</GlitchBadge>

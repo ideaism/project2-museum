@@ -139,7 +139,7 @@ function ObjectPage() {
         className="page-section object-page object-page--missing"
         aria-labelledby="missing-object-title"
       >
-        <p className="eyebrow">No-AR object walkthrough</p>
+        <p className="eyebrow">No-camera object walkthrough</p>
         <h1 id="missing-object-title">Object not found</h1>
         <p className="lead">
           The archive does not have a mug record for <strong>{id ?? 'this route'}</strong>.
@@ -172,6 +172,8 @@ function ObjectPage() {
           <p>
             Select a compartment to open its camera-free object record. The active mug is
             shown below as a stored object with layer controls and source-labelled notes.
+            Camera gesture mode is optional. This fallback simulates the same pouring
+            interaction.
           </p>
           <label className="object-selector">
             <span>Select object</span>
@@ -216,8 +218,9 @@ function ObjectPage() {
           </GlitchText>
           <p className="lead">
             A camera-free walkthrough for reading the mug as a container for daily
-            routine and political memory. Move the pour control to reveal the surface,
-            middle, and core archive layers.
+            routine and political memory. Camera gesture mode is optional. This fallback
+            simulates the same pouring interaction. Move the pour control to reveal the
+            surface, middle, and core archive layers.
           </p>
           <dl className="object-metadata" aria-label="Object metadata">
             <div>
@@ -280,7 +283,12 @@ function ObjectPage() {
 
         <figure className="object-media">
           <section className="object-pour-module" aria-labelledby="pour-title">
-            <LayerTransition layerState={selectedLayer} pourValue={pourInteraction.pourValue} />
+            <LayerTransition
+              layerState={selectedLayer}
+              pourValue={pourInteraction.pourValue}
+              inputStatus={pourInteraction.inputStatus}
+              inputConfidence={pourInteraction.inputConfidence}
+            />
             <div className="pour-panel__header">
               <div>
                 <p className="eyebrow">Manual pour</p>
@@ -298,19 +306,19 @@ function ObjectPage() {
             />
 
             <div className="object-pour-module__controls">
-              <PourGauge
-                tilt={pourInteraction}
-                label="Pour the 3D mug"
-                description="Use device tilt where available, or move the slider and layer buttons to pour the mug through the archive."
-              />
-            </div>
-          </section>
-          <figcaption>
-            3D model path: <code>{mug.modelPath ?? 'No model path yet'}</code>. No camera
-            or AR marker is required for this object walkthrough. Physical QR path:{' '}
-            <code>{mug.qrPath ?? 'QR path pending'}</code>
-          </figcaption>
-        </figure>
+            <PourGauge
+              tilt={pourInteraction}
+              label="Pour without camera"
+              description="Move the slider or use Surface, Middle, and Core to simulate the camera gesture pour."
+            />
+          </div>
+        </section>
+        <figcaption>
+            The mug model or image rotates from the same pour value as the gesture
+            experience. This route does not need camera access. Model path:{' '}
+            <code>{mug.modelPath ?? 'No model path yet'}</code>
+        </figcaption>
+      </figure>
       </div>
 
       <LayerCard layer={selectedLayer} fragments={activeFragments} sources={mug.sources} />
@@ -320,6 +328,8 @@ function ObjectPage() {
         layerState={selectedLayer}
         audioPaths={layerAudioPaths}
         pourValue={pourInteraction.soundIntensity}
+        inputStatus={pourInteraction.inputStatus}
+        inputConfidence={pourInteraction.inputConfidence}
       />
 
       <section className="object-installation-links" aria-labelledby="installation-title">
@@ -328,8 +338,8 @@ function ObjectPage() {
           <h2 id="installation-title">Continue the same object in another mode</h2>
         </div>
         <div className="action-row">
-          <Link className="button-link" to={`/ar/${mug.slug}`}>
-            Open AR marker route
+          <Link className="button-link" to={`/gesture/${mug.slug}`}>
+            Open camera gesture mode
           </Link>
           <Link className="button-link" to="/projection">
             Open projection wall

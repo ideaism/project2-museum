@@ -7,9 +7,9 @@ function About() {
         <p className="eyebrow">Design statement / AI process note</p>
         <h1 id="about-title">A cup that refuses one final reading.</h1>
         <p className="lead">
-          The Glitching Archive is a mobile-first WebAR museum prototype for political
-          ceramic mugs from a stored collection. It treats the mug as both an everyday
-          vessel and a container of political memory.
+          The Glitching Archive is a mobile-first camera gesture museum prototype for
+          political ceramic mugs from a stored collection. It treats the mug as both an
+          everyday vessel and a container of political memory.
         </p>
       </div>
 
@@ -19,8 +19,8 @@ function About() {
         <p>
           The project is built for museum visitors, tutors, reviewers, and collaborators
           assessing a speculative archive prototype. It is intended to sit in a room with a
-          physical cup, QR or AR marker, phone route, no-camera fallback, projection wall,
-          and local co-curation prompt.
+          physical cup, camera gesture route, no-camera fallback, projection wall, and local
+          co-curation prompt.
         </p>
       </section>
 
@@ -32,6 +32,17 @@ function About() {
           store. They make politics small enough to hold, but not simple enough to settle.
           That tension makes the cup a useful object for reading routine and political memory
           together.
+        </p>
+      </section>
+
+      <section className="status-panel warning" aria-labelledby="gesture-title">
+        <p className="eyebrow">Camera gesture pour</p>
+        <h2 id="gesture-title">The core act is pouring, not scanning.</h2>
+        <p>
+          The project moved away from AR marker tracking because the key conceptual act is
+          not scanning a marker, but performing a bodily gesture of pouring. The camera
+          becomes a way to sense the visitor&apos;s gesture, while the mug remains a container
+          of political memory.
         </p>
       </section>
 
@@ -65,12 +76,23 @@ function About() {
       </div>
 
       <section className="status-panel" aria-labelledby="installation-title">
-        <p className="eyebrow">AR / no-AR / projection</p>
-        <h2 id="installation-title">Phone, cup, marker, projection wall</h2>
+        <p className="eyebrow">Gesture / no-camera / projection</p>
+        <h2 id="installation-title">Hand, cup, camera, projection wall</h2>
         <p>
-          The walkable system joins a physical cup, printed QR or AR marker, handheld
-          marker route, no-camera object page, and projection or sound-wall mode. Camera
-          access is an enhancement; the no-AR route remains the reliable assessment path.
+          The walkable system joins a physical cup, camera gesture route, no-camera object
+          page, and projection or sound-wall mode. Camera access is an enhancement; the
+          no-camera route remains a central access path when permission, lighting, device,
+          or comfort conditions make camera use unsuitable.
+        </p>
+      </section>
+
+      <section className="status-panel" aria-labelledby="privacy-title">
+        <p className="eyebrow">Camera privacy</p>
+        <h2 id="privacy-title">Gesture sensing stays local.</h2>
+        <p>
+          The camera is used locally to estimate hand rotation and update pour value. The
+          prototype does not record video, upload video, capture audio, or send camera
+          frames to a project backend.
         </p>
       </section>
 
@@ -100,9 +122,8 @@ function About() {
         <h2 id="source-title">Every claim needs a visible status.</h2>
         <p>
           The interface separates fact, inference, speculation, visitor contribution, and
-          redaction. Possible object matches, unverified metadata, missing marker files,
-          absent audio, and placeholder rights information must stay visible as limits of the
-          prototype.
+          redaction. Possible object matches, unverified metadata, absent audio, and
+          placeholder rights information must stay visible as limits of the prototype.
         </p>
       </section>
 
@@ -131,7 +152,7 @@ function About() {
           <a href="https://sound-effects.bbcrewind.co.uk/">BBC Sound Effects Archive</a> as a
           model for searchable sound material; and{' '}
           <a href="https://www.vam.ac.uk/east/storehouse/visit">V&amp;A East Storehouse</a> as
-          a reference for open storage, object proximity, and QR-led lookup.
+          a reference for open storage, object proximity, and collection lookup.
         </p>
       </section>
 
@@ -139,13 +160,17 @@ function About() {
         <p className="eyebrow">Current limits</p>
         <h2 id="limits-title">What still needs source evidence</h2>
         <p>
-          The repository includes prototype mug images, GLB models, and one sample marker
-          pattern, but final presentation still needs QR codes, audio files with captions,
-          marker files for the other mugs, verified metadata, and rights information.
+          The repository includes prototype mug images and GLB models, but final
+          presentation still needs audio files with captions, verified metadata, and rights
+          information. Legacy marker files may remain in the repository, but they are not
+          required for the current Camera Gesture Pour Experience.
         </p>
         <div className="action-row">
-          <Link className="button-link primary" to="/object/sample-mug">
-            Open no-AR walkthrough
+          <Link className="button-link primary" to="/gesture/sample-mug">
+            Open gesture walkthrough
+          </Link>
+          <Link className="button-link" to="/object/sample-mug">
+            Open no-camera fallback
           </Link>
           <Link className="button-link" to="/projection">
             Open projection wall

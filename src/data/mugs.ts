@@ -16,16 +16,16 @@ const verifiedModelSlugs = new Set(['sample-mug', 'campaign-slogan-mug']);
 
 const cabinetAssetPaths: Record<string, { imagePath: string; modelPath: string }> = {
   'sample-mug': {
-    imagePath: '/assets/archive/images/mug1.png',
-    modelPath: '/assets/archive/models/mug1.glb',
+    imagePath: '/assets/archive/images/mug3.png',
+    modelPath: '/assets/archive/models/mug3.glb',
   },
   'campaign-slogan-mug': {
     imagePath: '/assets/archive/images/mug2.png',
     modelPath: '/assets/archive/models/mug2.glb',
   },
   'commemorative-protest-mug': {
-    imagePath: '/assets/archive/images/mug3.png',
-    modelPath: '/assets/archive/models/mug3.glb',
+    imagePath: '/assets/archive/images/mug1.png',
+    modelPath: '/assets/archive/models/mug1.glb',
   },
 };
 
@@ -46,8 +46,9 @@ function assetRequirementsFor(mugId: string, slug: string): AssetRequirement[] {
       mugId,
       type: 'marker',
       path: `/assets/archive/markers/${slug}.patt`,
-      status: slug === 'sample-mug' ? 'verified' : 'needed',
-      purpose: 'AR.js marker pattern for the printed marker card used as the archive access target.',
+      status: 'placeholder',
+      purpose:
+        'Legacy AR marker pattern retained from the retired marker workflow; not required for the current camera gesture experience.',
     },
     {
       id: `${slug}-qr`,
@@ -188,7 +189,7 @@ export const archiveMugs: MugRecord[] = [
           'The mug links national energy to labouring bodies. Strike conflict enters the kitchen as a handled routine.',
         sourceType: 'inference',
         researchType: 'inference',
-        sourceIds: ['agent10-story-proposal'],
+        sourceIds: ['curatorial-interpretation'],
       },
       {
         id: 'miners-middle-future-justice',
@@ -198,7 +199,7 @@ export const archiveMugs: MugRecord[] = [
           '"Future" reads as a demand, not a forecast. "Justice" makes the dispute moral as well as economic.',
         sourceType: 'inference',
         researchType: 'inference',
-        sourceIds: ['agent10-story-proposal'],
+        sourceIds: ['curatorial-interpretation'],
       },
       {
         id: 'miners-middle-family-pressure',
@@ -208,7 +209,7 @@ export const archiveMugs: MugRecord[] = [
           'The family-like figures may ask who carries strike pressure beyond the pit.',
         sourceType: 'speculation',
         researchType: 'speculation',
-        sourceIds: ['agent10-story-proposal'],
+        sourceIds: ['curatorial-interpretation'],
       },
     ],
     coreFragments: [
@@ -248,7 +249,7 @@ export const archiveMugs: MugRecord[] = [
         id: 'miners-visible-evidence',
         type: 'fact',
         label: 'Visible evidence: miners mug image',
-        citation: 'docs/object-stories-three-mugs.md, Mug 01 visible evidence.',
+        citation: 'Supplied object photograph; full catalogue match still under review.',
         confidence: 'partial',
       },
       {
@@ -283,17 +284,17 @@ export const archiveMugs: MugRecord[] = [
         confidence: 'unknown',
       },
       {
-        id: 'agent10-story-proposal',
+        id: 'curatorial-interpretation',
         type: 'inference',
-        label: 'Agent 10 object story proposal',
-        citation: 'docs/object-stories-three-mugs.md.',
+        label: 'Curatorial interpretation',
+        citation: 'Interpretive reading based on visible design, layer ethics, and public strike context.',
         confidence: 'partial',
       },
       {
         id: 'asset-manifest',
         type: 'fact',
-        label: 'Agent 02 placeholder asset manifest',
-        citation: 'See docs/archive-asset-requirements.md.',
+        label: 'Prototype media status',
+        citation: 'Media path recorded in the object data; some related assets remain pending.',
         confidence: 'partial',
       },
       {
@@ -308,7 +309,7 @@ export const archiveMugs: MugRecord[] = [
         id: 'local-storage-policy',
         type: 'visitorContribution',
         label: 'Local-only visitor contribution policy',
-        citation: 'MVP annotation data remains in browser LocalStorage.',
+        citation: 'Visitor text stays in this browser and is not treated as museum evidence.',
         confidence: 'confirmed',
       },
       {
@@ -431,7 +432,7 @@ export const archiveMugs: MugRecord[] = [
           'The mug reduces politics to name, colour, and recognition. It speaks through branding rather than a crowd.',
         sourceType: 'inference',
         researchType: 'inference',
-        sourceIds: ['agent10-story-proposal'],
+        sourceIds: ['curatorial-interpretation'],
       },
       {
         id: 'labour-middle-affiliation-stock',
@@ -441,7 +442,7 @@ export const archiveMugs: MugRecord[] = [
           'It may have sat on a desk as affiliation, habit, joke, loyalty, or leftover stock.',
         sourceType: 'speculation',
         researchType: 'speculation',
-        sourceIds: ['agent10-story-proposal'],
+        sourceIds: ['curatorial-interpretation'],
       },
       {
         id: 'labour-middle-movement-brand',
@@ -450,7 +451,7 @@ export const archiveMugs: MugRecord[] = [
         text: 'Party identity enters the hand through a domestic object.',
         sourceType: 'inference',
         researchType: 'inference',
-        sourceIds: ['agent10-story-proposal'],
+        sourceIds: ['curatorial-interpretation'],
       },
     ],
     coreFragments: [
@@ -489,8 +490,8 @@ export const archiveMugs: MugRecord[] = [
       {
         id: 'labour-visible-evidence',
         type: 'fact',
-        label: 'Agent 10 supplied Labour image reading',
-        citation: 'docs/object-stories-three-mugs.md, Mug 03 visible evidence.',
+        label: 'Visible evidence: Labour mug image',
+        citation: 'Supplied object photograph; full catalogue match still under review.',
         confidence: 'partial',
       },
       {
@@ -516,10 +517,10 @@ export const archiveMugs: MugRecord[] = [
         confidence: 'unknown',
       },
       {
-        id: 'agent10-story-proposal',
+        id: 'curatorial-interpretation',
         type: 'inference',
-        label: 'Agent 10 object story proposal',
-        citation: 'docs/object-stories-three-mugs.md.',
+        label: 'Curatorial interpretation',
+        citation: 'Interpretive reading based on visible design, layer ethics, and public collection context.',
         confidence: 'partial',
       },
       {
@@ -541,7 +542,7 @@ export const archiveMugs: MugRecord[] = [
         id: 'local-storage-policy',
         type: 'visitorContribution',
         label: 'Local-only visitor contribution policy',
-        citation: 'MVP annotation data remains in browser LocalStorage.',
+        citation: 'Visitor text stays in this browser and is not treated as museum evidence.',
         confidence: 'confirmed',
       },
     ],
@@ -656,7 +657,7 @@ export const archiveMugs: MugRecord[] = [
         text: 'The route turns unemployment into geography. Job loss is mapped across towns, not hidden in statistics.',
         sourceType: 'inference',
         researchType: 'inference',
-        sourceIds: ['agent10-story-proposal'],
+        sourceIds: ['curatorial-interpretation'],
       },
       {
         id: 'jobs-middle-walking-evidence',
@@ -666,7 +667,7 @@ export const archiveMugs: MugRecord[] = [
           'Walking becomes evidence. The body measures distance between political promise and work.',
         sourceType: 'inference',
         researchType: 'inference',
-        sourceIds: ['agent10-story-proposal'],
+        sourceIds: ['curatorial-interpretation'],
       },
       {
         id: 'jobs-middle-private-aftercare',
@@ -676,7 +677,7 @@ export const archiveMugs: MugRecord[] = [
           'The mug may have turned public endurance into private aftercare.',
         sourceType: 'speculation',
         researchType: 'speculation',
-        sourceIds: ['agent10-story-proposal'],
+        sourceIds: ['curatorial-interpretation'],
       },
     ],
     coreFragments: [
@@ -714,8 +715,8 @@ export const archiveMugs: MugRecord[] = [
       {
         id: 'jobs-visible-evidence',
         type: 'fact',
-        label: 'Agent 10 supplied People\'s March image reading',
-        citation: 'docs/object-stories-three-mugs.md, Mug 02 visible evidence.',
+        label: 'Visible evidence: People\'s March mug image',
+        citation: 'Supplied object photograph; V&A object match remains under review.',
         confidence: 'partial',
       },
       {
@@ -756,10 +757,10 @@ export const archiveMugs: MugRecord[] = [
         confidence: 'unknown',
       },
       {
-        id: 'agent10-story-proposal',
+        id: 'curatorial-interpretation',
         type: 'inference',
-        label: 'Agent 10 object story proposal',
-        citation: 'docs/object-stories-three-mugs.md.',
+        label: 'Curatorial interpretation',
+        citation: 'Interpretive reading based on visible route design, layer ethics, and public march context.',
         confidence: 'partial',
       },
       {
@@ -774,7 +775,7 @@ export const archiveMugs: MugRecord[] = [
         id: 'local-storage-policy',
         type: 'visitorContribution',
         label: 'Local-only visitor contribution policy',
-        citation: 'MVP annotation data remains in browser LocalStorage.',
+        citation: 'Visitor text stays in this browser and is not treated as museum evidence.',
         confidence: 'confirmed',
       },
       {

@@ -1,0 +1,180 @@
+.gesture-pour {
+  --pour-value: 0;
+  --gesture-confidence: 0;
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-card);
+  padding: clamp(0.9rem, 2vw, 1.15rem);
+  background:
+    linear-gradient(120deg, rgba(11, 114, 133, calc(0.06 + var(--gesture-confidence) * 0.1)), transparent 54%),
+    var(--color-panel);
+}
+
+.gesture-pour::before {
+  position: absolute;
+  inset: 0;
+  opacity: calc(0.08 + var(--pour-value) * 0.16);
+  background:
+    repeating-linear-gradient(180deg, transparent 0 0.48rem, rgba(29, 28, 25, 0.12) 0.48rem 0.54rem),
+    linear-gradient(90deg, rgba(11, 114, 133, 0.18), transparent 46%, rgba(156, 49, 95, 0.12));
+  content: "";
+  pointer-events: none;
+}
+
+.gesture-pour > * {
+  position: relative;
+  z-index: 1;
+}
+
+.gesture-pour__header,
+.gesture-pour__stage,
+.gesture-pour__panel,
+.gesture-pour__readout {
+  display: grid;
+  gap: 1rem;
+}
+
+.gesture-pour__header {
+  align-items: start;
+}
+
+.gesture-pour__header h2,
+.gesture-pour__instruction,
+.gesture-pour__privacy,
+.gesture-pour__readout span,
+.gesture-pour__readout strong {
+  margin-bottom: 0;
+}
+
+.gesture-pour__preview {
+  position: relative;
+  min-height: clamp(16rem, 58vw, 28rem);
+  overflow: hidden;
+  border: 1px solid rgba(29, 28, 25, 0.16);
+  border-radius: var(--radius-card);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    #25231f;
+  background-size: 2rem 2rem;
+}
+
+.gesture-pour__preview::before,
+.gesture-pour__preview::after {
+  position: absolute;
+  content: "";
+  pointer-events: none;
+}
+
+.gesture-pour__preview::before {
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(112deg, transparent 0 28%, rgba(255, 253, 248, calc(var(--pour-value) * 0.28)) 46%, transparent 68%),
+    repeating-linear-gradient(180deg, rgba(255, 253, 248, 0.1) 0 1px, transparent 1px 0.42rem);
+  mix-blend-mode: screen;
+}
+
+.gesture-pour__preview::after {
+  left: calc(18% + var(--pour-value) * 42%);
+  top: 17%;
+  z-index: 3;
+  width: min(32vw, 8rem);
+  height: calc(0.5rem + var(--pour-value) * 9rem);
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(180deg, rgba(255, 253, 248, 0.64) 0 0.42rem, rgba(11, 114, 133, 0.46) 0.42rem 0.76rem, rgba(156, 49, 95, 0.44) 0.76rem 1.08rem);
+  box-shadow:
+    -0.24rem 0 0 rgba(11, 114, 133, calc(var(--gesture-confidence) * 0.2)),
+    0.24rem 0 0 rgba(156, 49, 95, calc(var(--gesture-confidence) * 0.2));
+  opacity: calc(var(--pour-value) * 0.76);
+  transform: rotate(calc(-24deg + var(--pour-value) * 42deg));
+  transform-origin: top center;
+}
+
+.gesture-pour__preview video,
+.gesture-pour__placeholder {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.gesture-pour__preview video {
+  object-fit: cover;
+  background: #1d1c19;
+}
+
+.gesture-pour__placeholder {
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 42%, rgba(255, 247, 232, 0.2), transparent 24%);
+}
+
+.gesture-pour__placeholder span {
+  width: min(32vw, 8rem);
+  aspect-ratio: 0.72;
+  border: 2px solid rgba(255, 253, 248, 0.75);
+  border-radius: 999px 999px 8px 8px;
+}
+
+.gesture-pour__tracking {
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  border: 1px solid rgba(255, 253, 248, 0.34);
+  border-radius: 999px;
+  padding: 0.45rem 0.7rem;
+  background: rgba(29, 28, 25, 0.74);
+  color: white;
+  font-weight: 800;
+}
+
+.gesture-pour[data-status="tracking"] .gesture-pour__tracking {
+  background: rgba(24, 63, 69, 0.84);
+}
+
+.gesture-pour[data-status="searching"] .gesture-pour__tracking,
+.gesture-pour[data-status="lowConfidence"] .gesture-pour__tracking {
+  background: rgba(139, 47, 47, 0.84);
+}
+
+.gesture-pour__readout {
+  gap: 0.25rem;
+  border-left: 3px solid var(--color-deep);
+  padding-left: 0.75rem;
+}
+
+.gesture-pour__readout strong {
+  color: var(--color-ink);
+}
+
+.gesture-pour__privacy {
+  color: var(--color-muted);
+  font-size: 0.92rem;
+}
+
+.gesture-pour__error {
+  border-left: 3px solid var(--color-accent-strong);
+  padding-left: 0.7rem;
+  color: var(--color-accent-strong);
+}
+
+.gesture-pour button:disabled {
+  opacity: 0.58;
+}
+
+@media (min-width: 860px) {
+  .gesture-pour__header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .gesture-pour__stage {
+    grid-template-columns: minmax(0, 1.2fr) minmax(18rem, 0.8fr);
+    align-items: start;
+  }
+}

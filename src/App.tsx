@@ -1,13 +1,14 @@
-import { NavLink, Route, Routes } from 'react-router-dom';
+import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
 import About from './pages/About';
 import ARExperience from './pages/ARExperience';
+import GestureExperience from './pages/GestureExperience';
 import Home from './pages/Home';
 import ObjectPage from './pages/ObjectPage';
 import Projection from './pages/Projection';
 
 const navItems = [
   { to: '/', label: 'Home', end: true },
-  { to: '/ar/sample-mug', label: 'AR' },
+  { to: '/gesture/sample-mug', label: 'Gesture' },
   { to: '/object/sample-mug', label: 'Object' },
   { to: '/projection', label: 'Projection' },
   { to: '/about', label: 'About' },
@@ -21,7 +22,7 @@ function App() {
           Skip to content
         </a>
         <div className="site-title">
-          <span className="eyebrow">WebAR museum prototype</span>
+          <span className="eyebrow">Camera gesture museum prototype</span>
           <strong>The Glitching Archive</strong>
         </div>
         <nav className="site-nav" aria-label="Primary navigation">
@@ -41,7 +42,9 @@ function App() {
       <main id="main-content" className="page-frame">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/gesture/:id" element={<GestureExperience />} />
           <Route path="/ar/:id" element={<ARExperience />} />
+          <Route path="/camera-test" element={<Navigate to="/gesture/sample-mug" replace />} />
           <Route path="/object/:id" element={<ObjectPage />} />
           <Route path="/projection" element={<Projection />} />
           <Route path="/about" element={<About />} />

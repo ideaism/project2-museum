@@ -1,26 +1,26 @@
 # Archive Asset Requirements
 
-Agent 02 uses placeholder paths for missing related assets. These files are required before the prototype can be presented as a verified object archive.
+These files and evidence sources are required before the prototype can be presented as a verified object archive. Legacy marker assets are not required for the current Camera Gesture Pour Experience.
 
-| Mug ID | Asset | Placeholder path | Purpose |
+| Mug ID | Asset / evidence | Placeholder path or route | Purpose |
 | --- | --- | --- | --- |
-| `sample-mug` | Object image | `/assets/archive/images/mug1.png` | Support the Miners cabinet card and no-AR fallback image |
-| `sample-mug` | AR.js marker pattern | `/assets/archive/markers/sample-mug.patt` | Printed marker-card tracker for `/ar/sample-mug` |
-| `sample-mug` | QR code | `/assets/archive/qr/sample-mug.svg` | Physical cup route entry |
-| `sample-mug` | 3D model | `/assets/archive/models/mug1.glb` | Support the Miners no-AR object detail viewer |
+| `sample-mug` | Object image | `/assets/archive/images/mug1.png` | Support the Miners cabinet card and no-camera fallback image |
+| `sample-mug` | Camera gesture route | `/gesture/sample-mug` | Primary gesture-pour route |
+| `sample-mug` | Optional QR code | `/assets/archive/qr/sample-mug.svg` | Physical label linking to `/gesture/sample-mug` or `/object/sample-mug` |
+| `sample-mug` | 3D model | `/assets/archive/models/mug1.glb` | Support the Miners no-camera object detail viewer |
 | `sample-mug` | Projection audio | `/assets/archive/audio/sample-mug-projection.mp3` | Optional sound-wall loop |
-| `campaign-slogan-mug` | Object image | `/assets/archive/images/mug2.png` | Labour cabinet card and no-AR fallback image |
-| `campaign-slogan-mug` | AR.js marker pattern | `/assets/archive/markers/campaign-slogan-mug.patt` | Printed marker-card tracker for `/ar/campaign-slogan-mug` |
-| `campaign-slogan-mug` | QR code | `/assets/archive/qr/campaign-slogan-mug.svg` | Physical cup route entry |
-| `campaign-slogan-mug` | 3D model | `/assets/archive/models/mug2.glb` | Labour no-AR object detail viewer |
+| `campaign-slogan-mug` | Object image | `/assets/archive/images/mug2.png` | Labour cabinet card and no-camera fallback image |
+| `campaign-slogan-mug` | Camera gesture route | `/gesture/campaign-slogan-mug` | Primary gesture-pour route |
+| `campaign-slogan-mug` | Optional QR code | `/assets/archive/qr/campaign-slogan-mug.svg` | Physical label linking to `/gesture/campaign-slogan-mug` or `/object/campaign-slogan-mug` |
+| `campaign-slogan-mug` | 3D model | `/assets/archive/models/mug2.glb` | Labour no-camera object detail viewer |
 | `campaign-slogan-mug` | Projection audio | `/assets/archive/audio/campaign-slogan-mug-projection.mp3` | Optional sound-wall loop |
-| `commemorative-protest-mug` | Object image | `/assets/archive/images/mug3.png` | People's March for Jobs cabinet card and no-AR fallback image |
-| `commemorative-protest-mug` | AR.js marker pattern | `/assets/archive/markers/commemorative-protest-mug.patt` | Printed marker-card tracker for `/ar/commemorative-protest-mug` |
-| `commemorative-protest-mug` | QR code | `/assets/archive/qr/commemorative-protest-mug.svg` | Physical cup route entry |
-| `commemorative-protest-mug` | 3D model | `/assets/archive/models/mug3.glb` | People's March for Jobs no-AR object detail viewer |
+| `commemorative-protest-mug` | Object image | `/assets/archive/images/mug3.png` | People's March for Jobs cabinet card and no-camera fallback image |
+| `commemorative-protest-mug` | Camera gesture route | `/gesture/commemorative-protest-mug` | Primary gesture-pour route |
+| `commemorative-protest-mug` | Optional QR code | `/assets/archive/qr/commemorative-protest-mug.svg` | Physical label linking to `/gesture/commemorative-protest-mug` or `/object/commemorative-protest-mug` |
+| `commemorative-protest-mug` | 3D model | `/assets/archive/models/mug3.glb` | People's March for Jobs no-camera object detail viewer |
 | `commemorative-protest-mug` | Projection audio | `/assets/archive/audio/commemorative-protest-mug-projection.mp3` | Optional sound-wall loop |
 
-## 3D model requirements
+## 3D Model Requirements
 
 Current supplied model assets:
 
@@ -40,27 +40,27 @@ Current supplied cabinet image assets:
 
 - Preferred format: `.glb` first, `.gltf` plus external `.bin` and texture files only when necessary.
 - Location: place files under `public/assets/archive/models/` and reference them from `MugRecord.modelPath`, for example `/assets/archive/models/mug1.glb`.
-- Usage: `/object/:id` renders `modelPath` in the no-AR object media panel. It does not require AR marker files, camera access, or motion permission.
+- Usage: `/object/:id` renders `modelPath` in the no-camera object media panel. It does not require camera access, gesture tracking, or motion permission.
 - Budget: target 1-2 MB per model for mobile review, with an upper limit of 3 MB unless there is a documented reason. Keep geometry under roughly 20k triangles and textures at 1024 px square or smaller.
 - Materials: bake labels or mug artwork into simple PBR/base-color textures where possible. Avoid runtime procedural materials, animation, or large texture atlases for the MVP.
-- Scale: exported model should fit comfortably in a 1 m viewer scene with the mug centered around the origin. The no-AR viewer is tuned for supplied metric mugs about 0.12 m tall, using a close camera orbit rather than modifying model scale.
+- Scale: exported model should fit comfortably in a 1 m viewer scene with the mug centered around the origin. The no-camera viewer is tuned for supplied metric mugs about 0.12 m tall, using a close camera orbit rather than modifying model scale.
 - Orientation: export GLB/GLTF as Y-up with the mug upright and centered around the origin. Put the front label/artwork facing positive Z.
 - Fallback: if `modelPath` is missing from a mug record or the model cannot load, `/object/:id` falls back to the image or placeholder image panel.
 
-## AR marker-card tracking
+## Camera Gesture Requirements
 
-- Production prototype path: AR.js pattern tracking with a printed marker card.
-- Sample marker URL: `/assets/archive/markers/sample-mug.patt`.
-- Sample local file: `/Users/beijixinfei/project2/public/assets/archive/markers/sample-mug.patt`.
-- Printable sample card: `/assets/archive/markers/sample-mug-marker-card.png`.
-- The physical ceramic cup is the object anchor and installation prop. Do not use a plain ceramic cup as the primary MVP AR target.
-- The marker card may use hand-drawn or archival styling, but the trackable marker structure must remain square, flat, high contrast, and framed by a black border.
-- Future option: a MindAR image-tracking version could target a printed archive label or designed target image. Treat that as a later research path, not the production WebAR path for this prototype.
+- Primary route: `/gesture/:id`.
+- Camera use: local hand rotation sensing only.
+- Privacy: no recording, no upload, no microphone capture.
+- Fallback: `/object/:id` manual slider if camera permission, lighting, hand tracking, or model loading fails.
 
-## Layer-reactive projection audio
+## Legacy Marker Assets
 
-The `/projection` route uses these optional canonical archive paths for
-layer-reactive ambience:
+Legacy AR marker files may remain under `public/assets/archive/markers/` and marker fields may remain in data records for compatibility. They are obsolete for the current core interaction and are not required for final assessment.
+
+## Layer-Reactive Projection Audio
+
+The `/projection` route uses these optional canonical archive paths for layer-reactive ambience:
 
 | Layer | Path | Purpose |
 | --- | --- | --- |
@@ -68,8 +68,7 @@ layer-reactive ambience:
 | Middle | `/assets/archive/audio/projection-middle.mp3` | Labelled inference/speculation ambience |
 | Core | `/assets/archive/audio/projection-core.mp3` | Redaction, opacity, and visitor-memory ambience |
 
-These files are not required for the MVP to function. Projection mode must remain
-usable silently if the files are absent.
+These files are not required for the MVP to function. Projection mode must remain usable silently if the files are absent.
 
 ## Source Limits
 

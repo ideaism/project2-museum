@@ -1,6 +1,6 @@
 # Object Research: Three Political Mugs
 
-This file is the Agent 02 research handoff for The Glitching Archive. It separates verified catalogue/context information, visible evidence from supplied images, labelled interpretation, and gaps that must remain unresolved.
+This file is the object research handoff for The Glitching Archive. It separates verified catalogue/context information, visible evidence from supplied images, labelled interpretation, and gaps that must remain unresolved.
 
 ## Research Rules
 

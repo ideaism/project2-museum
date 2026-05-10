@@ -186,13 +186,57 @@
 }
 
 .pour-gauge {
+  --input-confidence: 0;
+  --pour-value: 0;
+  position: relative;
   display: grid;
   gap: 1rem;
+  overflow: hidden;
   border: 1px solid var(--color-rule);
   border-radius: var(--radius-card);
   padding: 1rem;
-  background: var(--color-panel);
+  background:
+    linear-gradient(90deg, rgba(24, 63, 69, calc(0.04 + var(--pour-value) * 0.06)), transparent 58%),
+    var(--color-panel);
   box-shadow: 0 12px 40px rgba(56, 48, 36, 0.08);
+}
+
+.pour-gauge::before {
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 0.5rem, rgba(29, 28, 25, 0.1) 0.5rem 0.56rem),
+    repeating-linear-gradient(90deg, rgba(156, 49, 95, 0.1) 0 1px, transparent 1px 1.4rem);
+  content: "";
+  pointer-events: none;
+}
+
+.pour-gauge > * {
+  position: relative;
+  z-index: 1;
+}
+
+.pour-gauge[data-input-source="gesture"] {
+  border-color: rgba(24, 63, 69, 0.34);
+}
+
+.pour-gauge[data-input-status="tracking"] {
+  box-shadow:
+    0 12px 40px rgba(56, 48, 36, 0.08),
+    inset 0 -0.2rem 0 rgba(24, 63, 69, 0.14);
+}
+
+.pour-gauge[data-input-status="lowConfidence"],
+.pour-gauge[data-input-status="searching"] {
+  border-color: rgba(139, 47, 47, 0.38);
+}
+
+.pour-gauge[data-input-status="manualFallback"],
+.pour-gauge[data-input-status="permissionNeeded"],
+.pour-gauge[data-input-status="failed"],
+.pour-gauge[data-input-status="unavailable"] {
+  border-style: dashed;
 }
 
 .pour-gauge__header,
@@ -204,11 +248,23 @@
 }
 
 .pour-gauge__meter {
-  height: 0.9rem;
+  position: relative;
+  height: 1.05rem;
   overflow: hidden;
   border: 1px solid rgba(29, 28, 25, 0.16);
   border-radius: 999px;
   background: #ece3d5;
+}
+
+.pour-gauge__meter::after {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 0.7rem, rgba(255, 253, 248, 0.42) 0.7rem 0.9rem),
+    linear-gradient(90deg, transparent, rgba(255, 253, 248, calc(var(--pour-value) * 0.52)), transparent);
+  content: "";
+  opacity: calc(0.18 + var(--pour-value) * 0.5);
+  pointer-events: none;
 }
 
 .pour-gauge__meter span {
@@ -216,7 +272,35 @@
   width: calc(var(--pour-value) * 100%);
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--color-deep), var(--color-accent));
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 253, 248, 0.22) 0 0.44rem, transparent 0.44rem 0.82rem),
+    linear-gradient(90deg, var(--color-deep), var(--color-accent), var(--color-accent-strong));
+  box-shadow:
+    0 0 0.8rem rgba(24, 63, 69, calc(var(--pour-value) * 0.24)),
+    0 0 1.2rem rgba(156, 49, 95, calc(var(--pour-value) * 0.18));
+}
+
+.pour-gauge[data-input-status="lowConfidence"] .pour-gauge__meter span,
+.pour-gauge[data-input-status="searching"] .pour-gauge__meter span {
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 253, 248, 0.36) 0 0.32rem, transparent 0.32rem 0.64rem),
+    linear-gradient(90deg, var(--color-accent-strong), var(--color-accent));
+}
+
+.pour-gauge__confidence {
+  height: 0.38rem;
+  overflow: hidden;
+  border: 1px solid rgba(29, 28, 25, 0.12);
+  border-radius: 999px;
+  background: rgba(236, 227, 213, 0.8);
+}
+
+.pour-gauge__confidence span {
+  display: block;
+  width: calc(var(--input-confidence) * 100%);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(24, 63, 69, 0.82), rgba(156, 49, 95, 0.76));
 }
 
 .pour-gauge__readout strong {
@@ -262,8 +346,15 @@
 }
 
 .pour-gauge__status {
+  border-left: 3px solid rgba(24, 63, 69, 0.28);
+  padding-left: 0.65rem;
   margin-bottom: 0;
   font-size: 0.95rem;
+}
+
+.pour-gauge[data-input-status="lowConfidence"] .pour-gauge__status,
+.pour-gauge[data-input-status="searching"] .pour-gauge__status {
+  border-left-color: rgba(139, 47, 47, 0.5);
 }
 
 @media (min-width: 720px) {
