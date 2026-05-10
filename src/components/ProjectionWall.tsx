@@ -78,7 +78,7 @@ function ProjectionWall({ mugs, annotations, onClearDemoData }: ProjectionWallPr
       <FloatingFragments fragments={fragments} paused={paused} />
 
       <div className="shadow-archive-wall__footer" aria-label="Projection status">
-        <span>{mugs.length} mug record</span>
+        <span>{mugs.length} mug stories</span>
         <span>{annotations.length} visitor contribution</span>
         <span>redactions remain visible</span>
       </div>

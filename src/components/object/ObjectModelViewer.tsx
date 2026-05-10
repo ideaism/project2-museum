@@ -1,4 +1,5 @@
-import { createElement, useEffect, useMemo, useRef, useState } from 'react';
+import { createElement, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import type { LayerState } from '../../types/archive';
 
 const MODEL_VIEWER_SCRIPT_ID = 'glitching-archive-model-viewer';
 const MODEL_VIEWER_SRC =
@@ -14,15 +15,24 @@ type ModelState =
 
 interface ObjectModelViewerProps {
   title: string;
+  layer: LayerState;
   modelPath?: string;
   imagePath?: string;
+  pourValue: number;
 }
 
 type ModelViewerElement = HTMLElement & {
   cameraOrbit?: string;
   cameraTarget?: string;
   fieldOfView?: string;
+  orientation?: string;
   updateFraming?: () => Promise<void>;
+};
+
+const layerLabels: Record<LayerState, string> = {
+  surface: 'Surface',
+  middle: 'Middle',
+  core: 'Core',
 };
 
 function loadModelViewerScript() {
@@ -84,16 +94,42 @@ function fallbackReason(state: ModelState, modelPath?: string) {
   return undefined;
 }
 
-function ObjectModelViewer({ title, modelPath, imagePath }: ObjectModelViewerProps) {
+function clampPourValue(value: number) {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.min(1, Math.max(0, value));
+}
+
+function getPourAngle(pourValue: number) {
+  return Math.round(clampPourValue(pourValue) * 78);
+}
+
+function ObjectModelViewer({
+  title,
+  layer,
+  modelPath,
+  imagePath,
+  pourValue,
+}: ObjectModelViewerProps) {
   const modelViewerRef = useRef<ModelViewerElement | null>(null);
   const [modelState, setModelState] = useState<ModelState>(modelPath ? 'checking' : 'noModel');
   const [imageFailed, setImageFailed] = useState(false);
+  const normalizedPourValue = clampPourValue(pourValue);
+  const pourAngle = getPourAngle(normalizedPourValue);
+  const modelOrientation = `0deg 0deg ${-pourAngle}deg`;
   const showModel = modelPath && modelState === 'ready';
   const reason = fallbackReason(modelState, modelPath);
   const modelPublicPath = useMemo(
     () => (modelPath ? `public${modelPath}` : undefined),
     [modelPath],
   );
+  const pourStyle = {
+    '--pour-value': String(normalizedPourValue),
+    '--pour-angle': `${pourAngle}deg`,
+    '--pour-rotation': `${-pourAngle}deg`,
+  } as CSSProperties;
 
   useEffect(() => {
     let isCurrent = true;
@@ -151,11 +187,23 @@ function ObjectModelViewer({ title, modelPath, imagePath }: ObjectModelViewerPro
     viewer.cameraOrbit = '62deg 68deg 0.34m';
     viewer.cameraTarget = '0.01m 0.058m 0.018m';
     viewer.fieldOfView = '24deg';
+    viewer.orientation = modelOrientation;
     void viewer.updateFraming?.();
   };
 
+  useEffect(() => {
+    const viewer = modelViewerRef.current;
+
+    if (!viewer || !showModel) {
+      return;
+    }
+
+    viewer.orientation = modelOrientation;
+    void viewer.updateFraming?.();
+  }, [modelOrientation, showModel]);
+
   return (
-    <div className="object-model-viewer">
+    <div className="object-model-viewer" data-pour-angle={pourAngle} style={pourStyle}>
       {showModel
         ? (
           <div className="object-model-viewer__frame">
@@ -180,6 +228,7 @@ function ObjectModelViewer({ title, modelPath, imagePath }: ObjectModelViewerPro
               'min-camera-orbit': 'auto auto 0.2m',
               'max-camera-orbit': 'auto auto 0.85m',
               'field-of-view': '24deg',
+              orientation: modelOrientation,
               loading: 'eager',
               onLoad: frameModel,
               onError: () => setModelState('failed'),
@@ -220,6 +269,11 @@ function ObjectModelViewer({ title, modelPath, imagePath }: ObjectModelViewerPro
               },
               createElement('span', null, 'Handle'),
             ))}
+            <div className="object-model-viewer__pour-stream" aria-hidden="true" />
+            <div className="object-model-viewer__layer" aria-live="polite">
+              <span className="layer-label">{layer}</span>
+              <strong>{layerLabels[layer]} layer</strong>
+            </div>
           </div>
         )
         : null}
@@ -242,8 +296,8 @@ function ObjectModelViewer({ title, modelPath, imagePath }: ObjectModelViewerPro
         <div>
           <h2>{title}</h2>
           <p>
-            Rotate the mug to inspect it as a domestic object carrying political memory:
-            printed surface, touch, storage, and unresolved archive context.
+            The same pour value that changes the archive layer also tilts the mug from
+            upright handling toward a stronger pouring gesture.
           </p>
         </div>
         {modelPath ? (

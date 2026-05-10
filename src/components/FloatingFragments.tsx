@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { ArchiveSourceType, LayerState } from '../types/archive';
+import RedactedText from './RedactedText';
 import SourceBadge from './object/SourceBadge';
 
 export interface FloatingFragment {
@@ -47,7 +48,16 @@ function FloatingFragments({ fragments, paused = false }: FloatingFragmentsProps
           </div>
           <p className="shadow-fragment__mug">{fragment.mugTitle}</p>
           <h3>{fragment.title}</h3>
-          <p>{fragment.text}</p>
+          <p>
+            {fragment.sourceType === 'redacted' ? (
+              <>
+                <RedactedText text={fragment.text} layerState={fragment.layer} />{' '}
+                <span className="shadow-fragment__note">redaction visible</span>
+              </>
+            ) : (
+              fragment.text
+            )}
+          </p>
         </article>
       ))}
     </div>

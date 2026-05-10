@@ -3,8 +3,8 @@ import { useId, useMemo, useState } from 'react';
 import AnnotationForm from '../components/AnnotationForm';
 import LayerCard from '../components/object/LayerCard';
 import ObjectModelViewer from '../components/object/ObjectModelViewer';
-import { findMugById } from '../data/mugs';
-import type { LayerState, NarrativeFragment } from '../types/archive';
+import { archiveMugs, findMugById } from '../data/mugs';
+import type { LayerState, MugRecord, NarrativeFragment } from '../types/archive';
 import '../styles/object.css';
 import '../styles/projection.css';
 
@@ -36,6 +36,45 @@ function getFragmentsByLayer(layer: LayerState, fragments: Record<LayerState, Na
   return fragments[layer];
 }
 
+interface ObjectCabinetCardProps {
+  record: MugRecord;
+  index: number;
+  isActive: boolean;
+}
+
+function ObjectCabinetCard({ record, index, isActive }: ObjectCabinetCardProps) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = Boolean(record.imagePath) && !imageFailed;
+
+  return (
+    <Link
+      className={`object-cubby${isActive ? ' is-active' : ''}`}
+      to={`/object/${record.slug}`}
+      aria-current={isActive ? 'page' : undefined}
+    >
+      <span className="object-cubby__glass">
+        {showImage ? (
+          <img
+            className="object-cubby__image"
+            src={record.imagePath}
+            alt={`${record.title} mug photograph`}
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <span className="object-cubby__placeholder" aria-hidden="true" />
+        )}
+      </span>
+      <span className="object-cubby__label">
+        <strong>Compartment {String(index + 1).padStart(2, '0')}</strong>
+        <span>{record.title}</span>
+      </span>
+      <span className="object-cubby__status">
+        {record.modelPath ? '3D model filed' : 'Model pending'}
+      </span>
+    </Link>
+  );
+}
+
 function ObjectPage() {
   const { id } = useParams();
   const mug = findMugById(id);
@@ -51,6 +90,9 @@ function ObjectPage() {
     [mug],
   );
   const activeFragments = getFragmentsByLayer(selectedLayer, fragmentsByLayer);
+  const selectedMugIndex = mug
+    ? archiveMugs.findIndex((record) => record.id === mug.id || record.slug === mug.slug)
+    : -1;
 
   if (!mug) {
     return (
@@ -79,9 +121,40 @@ function ObjectPage() {
 
   return (
     <section className="page-section object-page" aria-labelledby="object-title">
+      <section className="object-cabinet" aria-labelledby="cabinet-title">
+        <div className="object-cabinet__header">
+          <div>
+            <p className="eyebrow">Digital storage cabinet</p>
+            <h2 id="cabinet-title">Stored political mugs</h2>
+          </div>
+          <p>
+            Select a compartment to open its camera-free object record. The active mug is
+            shown below as a stored object with layer controls and source-labelled notes.
+          </p>
+        </div>
+
+        <nav className="object-cabinet__grid" aria-label="Stored mug compartments">
+          {archiveMugs.map((record, index) => {
+            const isActive = record.id === mug.id;
+
+            return (
+              <ObjectCabinetCard
+                key={record.id}
+                record={record}
+                index={index}
+                isActive={isActive}
+              />
+            );
+          })}
+        </nav>
+      </section>
+
       <div className="object-hero">
         <div className="object-hero__copy">
-          <p className="eyebrow">No-AR object walkthrough</p>
+          <p className="eyebrow">
+            Active cabinet item
+            {selectedMugIndex >= 0 ? ` / compartment ${selectedMugIndex + 1}` : ''}
+          </p>
           <h1 id="object-title">{mug.title}</h1>
           <p className="lead">
             A camera-free walkthrough for reading the mug as a container for daily
@@ -109,11 +182,57 @@ function ObjectPage() {
         </div>
 
         <figure className="object-media">
-          <ObjectModelViewer
-            title={mug.title}
-            modelPath={mug.modelPath}
-            imagePath={mug.imagePath}
-          />
+          <section className="object-pour-module" aria-labelledby="pour-title">
+            <div className="pour-panel__header">
+              <div>
+                <p className="eyebrow">Manual pour</p>
+                <h2 id="pour-title">Tilt the mug through the archive</h2>
+              </div>
+              <p aria-live="polite" className="pour-panel__state">
+                Current layer: <strong>{layerRangeLabels[selectedLayer]}</strong>
+              </p>
+            </div>
+
+            <ObjectModelViewer
+              title={mug.title}
+              layer={selectedLayer}
+              modelPath={mug.modelPath}
+              imagePath={mug.imagePath}
+              pourValue={pourValue}
+            />
+
+            <div className="object-pour-module__controls">
+              <label className="pour-slider-label" htmlFor={sliderId}>
+                Pour from surface to core
+              </label>
+              <input
+                id={sliderId}
+                className="pour-slider"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={pourValue}
+                aria-valuetext={layerRangeLabels[selectedLayer]}
+                onInput={(event) => setPourValue(Number(event.currentTarget.value))}
+                onChange={(event) => setPourValue(Number(event.currentTarget.value))}
+              />
+
+              <div className="pour-layer-buttons" aria-label="Choose archive layer">
+                {layerOrder.map((layer) => (
+                  <button
+                    key={layer}
+                    className={layer === selectedLayer ? 'is-active' : undefined}
+                    type="button"
+                    aria-pressed={layer === selectedLayer}
+                    onClick={() => setPourValue(layerToSliderValue(layer))}
+                  >
+                    {layer}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
           <figcaption>
             3D model path: <code>{mug.modelPath ?? 'No model path yet'}</code>. No camera
             or AR marker is required for this object walkthrough. Physical QR path:{' '}
@@ -121,47 +240,6 @@ function ObjectPage() {
           </figcaption>
         </figure>
       </div>
-
-      <section className="pour-panel" aria-labelledby="pour-title">
-        <div className="pour-panel__header">
-          <div>
-            <p className="eyebrow">Manual pour</p>
-            <h2 id="pour-title">Tilt substitute</h2>
-          </div>
-          <p aria-live="polite" className="pour-panel__state">
-            Current layer: <strong>{layerRangeLabels[selectedLayer]}</strong>
-          </p>
-        </div>
-
-        <label className="pour-slider-label" htmlFor={sliderId}>
-          Pour from surface to core
-        </label>
-        <input
-          id={sliderId}
-          className="pour-slider"
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={pourValue}
-          aria-valuetext={layerRangeLabels[selectedLayer]}
-          onChange={(event) => setPourValue(Number(event.currentTarget.value))}
-        />
-
-        <div className="pour-layer-buttons" aria-label="Choose archive layer">
-          {layerOrder.map((layer) => (
-            <button
-              key={layer}
-              className={layer === selectedLayer ? 'is-active' : undefined}
-              type="button"
-              aria-pressed={layer === selectedLayer}
-              onClick={() => setPourValue(layerToSliderValue(layer))}
-            >
-              {layer}
-            </button>
-          ))}
-        </div>
-      </section>
 
       <LayerCard layer={selectedLayer} fragments={activeFragments} sources={mug.sources} />
 

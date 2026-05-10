@@ -17,7 +17,7 @@ const LOCAL_PUBLIC_ROOT = '/Users/beijixinfei/project2/public';
 
 type MarkerAssetState = 'unchecked' | 'available' | 'missing' | 'invalid';
 type MarkerTrackingState = 'idle' | 'scanning' | 'found' | 'lost';
-type RuntimeState = 'idle' | 'loading' | 'preview' | 'ready' | 'error';
+type RuntimeState = 'idle' | 'loading' | 'ready' | 'error';
 const ARJS_PATTERN_MIN_NUMERIC_VALUES = 768;
 
 interface ARSceneProps {
@@ -102,32 +102,16 @@ function getLocalPublicAssetPath(path: string) {
   return `${LOCAL_PUBLIC_ROOT}/${normalizedPath}`;
 }
 
-type CameraRequestResult =
-  | { state: 'granted'; stream: MediaStream }
-  | { state: Exclude<CameraPermissionState, 'checking' | 'prompt' | 'granted' | 'markerMissing'> };
-
-async function requestCameraStream(): Promise<CameraRequestResult> {
+function getCameraContextBlocker(): CameraPermissionState | undefined {
   if (!window.isSecureContext && window.location.hostname !== 'localhost') {
-    return { state: 'unsupported' };
+    return 'unsupported';
   }
 
   if (!navigator.mediaDevices?.getUserMedia) {
-    return { state: 'unsupported' };
+    return 'unsupported';
   }
 
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' } },
-      audio: false,
-    });
-    return { state: 'granted', stream };
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'NotAllowedError') {
-      return { state: 'denied' };
-    }
-
-    return { state: 'error' };
-  }
+  return undefined;
 }
 
 function getFragmentsForLayer(mug: MugRecord, layer: LayerState) {
@@ -223,8 +207,6 @@ function buildSceneMarkup(markerPatternPath: string, modelPath: string | undefin
 
 function ARScene({ mug, tilt }: ARSceneProps) {
   const sceneHostRef = useRef<HTMLDivElement | null>(null);
-  const cameraPreviewRef = useRef<HTMLVideoElement | null>(null);
-  const cameraStreamRef = useRef<MediaStream | null>(null);
   const [cameraState, setCameraState] = useState<CameraPermissionState>('prompt');
   const [runtimeState, setRuntimeState] = useState<RuntimeState>('idle');
   const [markerAssetState, setMarkerAssetState] = useState<MarkerAssetState>('unchecked');
@@ -243,15 +225,6 @@ function ARScene({ mug, tilt }: ARSceneProps) {
   const showCameraButton =
     cameraState === 'prompt' || cameraState === 'error' || cameraState === 'markerMissing';
   const isRequestingCamera = runtimeState === 'loading' || cameraState === 'checking';
-
-  const stopCameraPreview = useCallback(() => {
-    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
-    cameraStreamRef.current = null;
-
-    if (cameraPreviewRef.current) {
-      cameraPreviewRef.current.srcObject = null;
-    }
-  }, []);
 
   useEffect(() => {
     let isCurrent = true;
@@ -278,7 +251,22 @@ function ARScene({ mug, tilt }: ARSceneProps) {
     }
 
     sceneHost.innerHTML = buildSceneMarkup(mug.markerPatternPath, mug.modelPath);
+    const scene = sceneHost.querySelector('a-scene');
     const marker = sceneHost.querySelector('a-marker');
+
+    if (scene) {
+      scene.addEventListener('camera-init', () => {
+        setCameraState('granted');
+        setStatusMessage('Camera ready. Hold the printed marker card in view.');
+      });
+      scene.addEventListener('camera-error', () => {
+        setCameraState('denied');
+        setRuntimeState('error');
+        setStatusMessage(
+          'Camera access was denied or could not start. Use the no-AR route or allow camera access and try again.',
+        );
+      });
+    }
 
     if (marker) {
       marker.addEventListener('markerFound', () => setMarkerTrackingState('found'));
@@ -293,42 +281,32 @@ function ARScene({ mug, tilt }: ARSceneProps) {
     setCameraState('checking');
     setRuntimeState('loading');
 
-    const cameraResult = await requestCameraStream();
-    setCameraState(cameraResult.state);
+    const cameraBlocker = getCameraContextBlocker();
 
-    if (cameraResult.state !== 'granted') {
-      setRuntimeState(cameraResult.state === 'unsupported' ? 'idle' : 'error');
+    if (cameraBlocker) {
+      setCameraState(cameraBlocker);
+      setRuntimeState(cameraBlocker === 'unsupported' ? 'idle' : 'error');
+      setStatusMessage(
+        'Camera AR needs a secure browser context. Use HTTPS, localhost, or the deployed prototype, then try again.',
+      );
       return;
-    }
-
-    stopCameraPreview();
-    cameraStreamRef.current = cameraResult.stream;
-
-    if (cameraPreviewRef.current) {
-      cameraPreviewRef.current.srcObject = cameraResult.stream;
-      void cameraPreviewRef.current.play().catch(() => {
-        setStatusMessage(
-          'Camera permission was granted, but this browser did not start the inline preview. Continue with the no-AR route if the view remains blank.',
-        );
-      });
     }
 
     const nextMarkerAssetState = await checkMarkerAsset(mug.markerPatternPath);
     setMarkerAssetState(nextMarkerAssetState);
 
     if (nextMarkerAssetState !== 'available') {
-      setRuntimeState('preview');
+      setRuntimeState('error');
       setCameraState('markerMissing');
       setStatusMessage(
         nextMarkerAssetState === 'invalid'
-          ? `Camera preview is active, but the marker file does not look like a valid AR.js .patt pattern. Replace it with a real AR.js marker pattern at ${markerLocalPath}.`
-          : `Camera preview is active, but live marker tracking needs the .patt file at ${markerLocalPath}.`,
+          ? `The marker file does not look like a valid AR.js .patt pattern. Replace it with a real AR.js marker pattern at ${markerLocalPath}.`
+          : `Live marker tracking needs the .patt file at ${markerLocalPath}.`,
       );
       return;
     }
 
     try {
-      stopCameraPreview();
       await loadScript(AFRAME_SCRIPT_ID, AFRAME_SRC);
       await loadScript(ARJS_SCRIPT_ID, ARJS_SRC);
 
@@ -338,6 +316,7 @@ function ARScene({ mug, tilt }: ARSceneProps) {
 
       mountArScene();
       setRuntimeState('ready');
+      setStatusMessage('Starting AR.js camera. If prompted, allow camera access.');
     } catch {
       setRuntimeState('error');
       setCameraState('error');
@@ -345,9 +324,7 @@ function ARScene({ mug, tilt }: ARSceneProps) {
         'The AR.js scripts could not be loaded in this environment. The archive overlay remains available below.',
       );
     }
-  }, [markerLocalPath, mountArScene, mug.markerPatternPath, stopCameraPreview]);
-
-  useEffect(() => stopCameraPreview, [stopCameraPreview]);
+  }, [markerLocalPath, mountArScene, mug.markerPatternPath]);
 
   const markerStatus =
     markerAssetState === 'missing'
@@ -356,8 +333,6 @@ function ARScene({ mug, tilt }: ARSceneProps) {
         ? 'Marker pattern invalid'
       : markerAssetState === 'available' && runtimeState !== 'ready'
         ? 'Marker asset ready'
-      : runtimeState === 'preview'
-        ? 'Camera preview active'
       : markerTrackingState === 'found'
           ? 'Marker found'
         : markerTrackingState === 'lost'
@@ -387,16 +362,7 @@ function ARScene({ mug, tilt }: ARSceneProps) {
       <div className="ar-scene__stage" data-runtime={runtimeState}>
         <div ref={sceneHostRef} className="ar-scene__host" aria-hidden={runtimeState !== 'ready'} />
 
-        <video
-          ref={cameraPreviewRef}
-          className="ar-scene__preview"
-          aria-hidden={runtimeState !== 'preview'}
-          autoPlay
-          muted
-          playsInline
-        />
-
-        {runtimeState !== 'ready' && runtimeState !== 'preview' ? (
+        {runtimeState !== 'ready' ? (
           <div className="ar-scene__camera-placeholder" aria-hidden="true">
             <span />
           </div>
@@ -440,34 +406,44 @@ function ARScene({ mug, tilt }: ARSceneProps) {
           <summary>
             <span>
               <span className="layer-label">{tilt.layerState}</span>
-              <strong>{activeFragment?.title ?? 'No fragment for this layer'}</strong>
+              <strong>
+                {activeFragments.length > 0
+                  ? `${activeFragments.length} ${tilt.layerState} fragments`
+                  : 'No fragment for this layer'}
+              </strong>
             </span>
             {activeFragment ? <SourceBadge type={activeFragment.sourceType} /> : null}
           </summary>
 
-          <article className="ar-layer-drawer__content" aria-live="polite">
-            {activeFragment ? (
-              <>
-                <p>{activeFragment.text}</p>
-                <dl className="ar-overlay-card__sources" aria-label="Visible source labels">
-                  {findSources(activeFragment, mug.sources).map((source) => (
-                    <div key={source.id}>
-                      <dt>{source.label}</dt>
-                      <dd>
-                        {source.type}
-                        {source.confidence ? ` · ${source.confidence}` : ''}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </>
+          <div className="ar-layer-drawer__content" aria-live="polite">
+            {activeFragments.length > 0 ? (
+              activeFragments.map((fragment) => (
+                <article className="ar-fragment-card" key={fragment.id}>
+                  <div className="ar-fragment-card__header">
+                    <h2>{fragment.title}</h2>
+                    <SourceBadge type={fragment.sourceType} />
+                  </div>
+                  <p>{fragment.text}</p>
+                  <dl className="ar-overlay-card__sources" aria-label="Visible source labels">
+                    {findSources(fragment, mug.sources).map((source) => (
+                      <div key={source.id}>
+                        <dt>{source.label}</dt>
+                        <dd>
+                          {source.type}
+                          {source.confidence ? ` · ${source.confidence}` : ''}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </article>
+              ))
             ) : (
               <p>
                 This absence remains visible until sourced archive data or local visitor
                 contributions are added.
               </p>
             )}
-          </article>
+          </div>
         </details>
 
         {markerAssetState === 'missing' || markerAssetState === 'invalid' ? (

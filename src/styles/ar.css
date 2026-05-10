@@ -35,7 +35,6 @@
 
 .ar-scene__host,
 .ar-scene__host a-scene,
-.ar-scene__preview,
 .ar-scene__camera-placeholder {
   position: absolute;
   inset: 0;
@@ -44,17 +43,6 @@
 .ar-scene__host a-scene {
   width: 100%;
   height: 100%;
-}
-
-.ar-scene__preview {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  background: #15130f;
-}
-
-.ar-scene__preview[aria-hidden="true"] {
-  display: none;
 }
 
 .ar-scene__host video,
@@ -203,9 +191,35 @@
 
 .ar-layer-drawer__content {
   display: grid;
-  gap: 0.7rem;
+  gap: 0.8rem;
   border-top: 1px solid rgba(29, 28, 25, 0.12);
   padding: 0.8rem;
+}
+
+.ar-fragment-card {
+  display: grid;
+  gap: 0.55rem;
+  border-bottom: 1px solid rgba(29, 28, 25, 0.12);
+  padding-bottom: 0.8rem;
+}
+
+.ar-fragment-card:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.ar-fragment-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.ar-fragment-card h2 {
+  margin-bottom: 0;
+  font-size: 1rem;
+  line-height: 1.25;
 }
 
 .ar-marker-missing {

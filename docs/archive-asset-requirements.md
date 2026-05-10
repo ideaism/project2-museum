@@ -4,20 +4,20 @@ Agent 02 uses placeholder paths for missing related assets. These files are requ
 
 | Mug ID | Asset | Placeholder path | Purpose |
 | --- | --- | --- | --- |
-| `sample-mug` | Object photograph | `/assets/archive/images/sample-mug.jpg` | No-AR object page and archive cards |
+| `sample-mug` | Object image | `/assets/archive/images/mug1.png` | Support the Miners cabinet card and no-AR fallback image |
 | `sample-mug` | AR.js marker pattern | `/assets/archive/markers/sample-mug.patt` | Printed marker-card tracker for `/ar/sample-mug` |
 | `sample-mug` | QR code | `/assets/archive/qr/sample-mug.svg` | Physical cup route entry |
-| `sample-mug` | 3D model | `/assets/archive/models/sample-mug.glb` | No-AR object detail viewer |
+| `sample-mug` | 3D model | `/assets/archive/models/mug1.glb` | Support the Miners no-AR object detail viewer |
 | `sample-mug` | Projection audio | `/assets/archive/audio/sample-mug-projection.mp3` | Optional sound-wall loop |
-| `campaign-slogan-mug` | Object photograph | `/assets/archive/images/campaign-slogan-mug.jpg` | No-AR object page and archive cards |
+| `campaign-slogan-mug` | Object image | `/assets/archive/images/mug2.png` | Labour cabinet card and no-AR fallback image |
 | `campaign-slogan-mug` | AR.js marker pattern | `/assets/archive/markers/campaign-slogan-mug.patt` | Printed marker-card tracker for `/ar/campaign-slogan-mug` |
 | `campaign-slogan-mug` | QR code | `/assets/archive/qr/campaign-slogan-mug.svg` | Physical cup route entry |
-| `campaign-slogan-mug` | 3D model | `/assets/archive/models/campaign-slogan-mug.glb` | Supplied GLB model for no-AR object detail viewer |
+| `campaign-slogan-mug` | 3D model | `/assets/archive/models/mug2.glb` | Labour no-AR object detail viewer |
 | `campaign-slogan-mug` | Projection audio | `/assets/archive/audio/campaign-slogan-mug-projection.mp3` | Optional sound-wall loop |
-| `commemorative-protest-mug` | Object photograph | `/assets/archive/images/commemorative-protest-mug.jpg` | No-AR object page and archive cards |
+| `commemorative-protest-mug` | Object image | `/assets/archive/images/mug3.png` | People's March for Jobs cabinet card and no-AR fallback image |
 | `commemorative-protest-mug` | AR.js marker pattern | `/assets/archive/markers/commemorative-protest-mug.patt` | Printed marker-card tracker for `/ar/commemorative-protest-mug` |
 | `commemorative-protest-mug` | QR code | `/assets/archive/qr/commemorative-protest-mug.svg` | Physical cup route entry |
-| `commemorative-protest-mug` | 3D model | `/assets/archive/models/commemorative-protest-mug.glb` | No-AR object detail viewer |
+| `commemorative-protest-mug` | 3D model | `/assets/archive/models/mug3.glb` | People's March for Jobs no-AR object detail viewer |
 | `commemorative-protest-mug` | Projection audio | `/assets/archive/audio/commemorative-protest-mug-projection.mp3` | Optional sound-wall loop |
 
 ## 3D model requirements
@@ -26,11 +26,20 @@ Current supplied model assets:
 
 | Mug ID | Model path | Source export | Size |
 | --- | --- | --- | --- |
-| `sample-mug` | `/assets/archive/models/sample-mug.glb` | Existing project asset | Existing lightweight GLB |
-| `campaign-slogan-mug` | `/assets/archive/models/campaign-slogan-mug.glb` | `exports/labour_typography_mug/labour_typography_mug.glb` | 1.1 MB |
+| `sample-mug` | `/assets/archive/models/mug1.glb` | `exports/texture_mapped_mugs/support_miners_mug/support_miners_mug_texture.glb` | 1.3 MB |
+| `campaign-slogan-mug` | `/assets/archive/models/mug2.glb` | User-managed cabinet asset for Compartment 02 | Supplied GLB |
+| `commemorative-protest-mug` | `/assets/archive/models/mug3.glb` | User-managed cabinet asset for Compartment 03 | Supplied GLB |
+
+Current supplied cabinet image assets:
+
+| Mug ID | Image path | Source export |
+| --- | --- | --- |
+| `sample-mug` | `/assets/archive/images/mug1.png` | `exports/texture_mapped_mugs/previews/support_miners_mug_texture.png` |
+| `campaign-slogan-mug` | `/assets/archive/images/mug2.png` | User-managed cabinet image for Compartment 02 |
+| `commemorative-protest-mug` | `/assets/archive/images/mug3.png` | User-managed cabinet image for Compartment 03 |
 
 - Preferred format: `.glb` first, `.gltf` plus external `.bin` and texture files only when necessary.
-- Location: place files under `public/assets/archive/models/` and reference them from `MugRecord.modelPath`, for example `/assets/archive/models/sample-mug.glb`.
+- Location: place files under `public/assets/archive/models/` and reference them from `MugRecord.modelPath`, for example `/assets/archive/models/mug1.glb`.
 - Usage: `/object/:id` renders `modelPath` in the no-AR object media panel. It does not require AR marker files, camera access, or motion permission.
 - Budget: target 1-2 MB per model for mobile review, with an upper limit of 3 MB unless there is a documented reason. Keep geometry under roughly 20k triangles and textures at 1024 px square or smaller.
 - Materials: bake labels or mug artwork into simple PBR/base-color textures where possible. Avoid runtime procedural materials, animation, or large texture atlases for the MVP.

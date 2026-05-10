@@ -7,15 +7,17 @@ walkthrough and do not depend on AR marker assets.
 Current supplied model paths:
 
 ```txt
-/assets/archive/models/sample-mug.glb
-/assets/archive/models/campaign-slogan-mug.glb
+/assets/archive/models/mug1.glb  # Support the Miners
+/assets/archive/models/mug2.glb  # Compartment 02 / Labour
+/assets/archive/models/mug3.glb  # Compartment 03 / People's March for Jobs
 ```
 
 Disk location:
 
 ```txt
-public/assets/archive/models/sample-mug.glb
-public/assets/archive/models/campaign-slogan-mug.glb
+public/assets/archive/models/mug1.glb
+public/assets/archive/models/mug2.glb
+public/assets/archive/models/mug3.glb
 ```
 
 Model requirements:

@@ -5,9 +5,9 @@ import RedactedText from '../components/RedactedText';
 import ScanlineOverlay from '../components/ScanlineOverlay';
 import SoundManager from '../components/SoundManager';
 import SourceBadge from '../components/object/SourceBadge';
-import { placeholderMugs } from '../data/mugs';
+import { archiveMugs } from '../data/mugs';
 import { useArchiveAnnotations } from '../hooks/useArchiveAnnotations';
-import type { AnnotationType, LayerState, NarrativeFragment } from '../types/archive';
+import type { AnnotationType, LayerState, MugRecord, NarrativeFragment } from '../types/archive';
 import '../styles/projection.css';
 
 const layerOrder: LayerState[] = ['surface', 'middle', 'core'];
@@ -31,27 +31,44 @@ const audioPaths: Record<LayerState, string> = {
   core: '/assets/archive/audio/projection-core.mp3',
 };
 
-function getFragmentsForLayer(layer: LayerState): NarrativeFragment[] {
-  return placeholderMugs.flatMap((mug) => {
-    if (layer === 'surface') {
-      return mug.facts;
-    }
+interface ProjectionStoryGroup {
+  mug: MugRecord;
+  fragments: NarrativeFragment[];
+}
 
-    if (layer === 'middle') {
-      return mug.middleReadings;
-    }
+function getFragmentsForMug(mug: MugRecord, layer: LayerState): NarrativeFragment[] {
+  if (layer === 'surface') {
+    return mug.facts;
+  }
 
-    return mug.coreFragments;
-  });
+  if (layer === 'middle') {
+    return mug.middleReadings;
+  }
+
+  return mug.coreFragments;
+}
+
+function getStoryGroupsForLayer(layer: LayerState): ProjectionStoryGroup[] {
+  return archiveMugs
+    .map((mug) => ({
+      mug,
+      fragments: getFragmentsForMug(mug, layer),
+    }))
+    .filter((group) => group.fragments.length > 0);
 }
 
 function Projection() {
   const [activeLayer, setActiveLayer] = useState<LayerState>('surface');
   const { annotations, clearAnnotations } = useArchiveAnnotations();
-  const fragments = useMemo(() => getFragmentsForLayer(activeLayer), [activeLayer]);
-  const visitorAnnotations = useMemo(
+  const storyGroups = useMemo(() => getStoryGroupsForLayer(activeLayer), [activeLayer]);
+  const activeLayerAnnotations = useMemo(
     () => annotations.filter((annotation) => annotation.layer === activeLayer),
     [activeLayer, annotations],
+  );
+  const knownMugIds = useMemo(() => new Set(archiveMugs.flatMap((mug) => [mug.id, mug.slug])), []);
+  const orphanLayerAnnotations = useMemo(
+    () => activeLayerAnnotations.filter((annotation) => !knownMugIds.has(annotation.mugId)),
+    [activeLayerAnnotations, knownMugIds],
   );
 
   return (
@@ -92,41 +109,89 @@ function Projection() {
             <span className="layer-label">{activeLayer}</span>
             <h2>{layerDescriptions[activeLayer]}</h2>
 
-            <div className="projection-fragments">
-              {fragments.map((fragment) => (
-                <section key={fragment.id} className="projection-fragment">
-                  <SourceBadge type={fragment.sourceType} />
-                  <h3>{fragment.title}</h3>
-                  <p>
-                    {fragment.sourceType === 'redacted' ? (
-                      <>
-                        <RedactedText text={fragment.text} layerState={activeLayer} />{' '}
-                        <span className="projection-fragment__note">
-                          Redaction remains visible as an archive state.
-                        </span>
-                      </>
-                    ) : (
-                      fragment.text
-                    )}
-                  </p>
+            <div className="projection-story-groups">
+              {storyGroups.map(({ mug, fragments }) => {
+                const mugAnnotations = activeLayerAnnotations.filter(
+                  (annotation) => annotation.mugId === mug.id || annotation.mugId === mug.slug,
+                );
+
+                return (
+                  <section key={mug.id} className="projection-story-card">
+                    <div className="projection-story-card__header">
+                      <p className="projection-story-card__kicker">Mug story</p>
+                      <h3>{mug.title}</h3>
+                      <p>{mug.dateRange ?? 'Date pending verification'}</p>
+                    </div>
+
+                    <div className="projection-fragments">
+                      {fragments.map((fragment) => (
+                        <section key={fragment.id} className="projection-fragment">
+                          <SourceBadge type={fragment.sourceType} />
+                          <h4>{fragment.title}</h4>
+                          <p>
+                            {fragment.sourceType === 'redacted' ? (
+                              <>
+                                <RedactedText text={fragment.text} layerState={activeLayer} />{' '}
+                                <span className="projection-fragment__note">
+                                  Redaction remains visible as an archive state.
+                                </span>
+                              </>
+                            ) : (
+                              fragment.text
+                            )}
+                          </p>
+                        </section>
+                      ))}
+
+                      {mugAnnotations.map((annotation) => (
+                        <section
+                          key={annotation.id}
+                          className="projection-fragment projection-fragment--visitor"
+                        >
+                          <SourceBadge type={annotation.sourceType} />
+                          <h4>{annotationLabels[annotation.type]}</h4>
+                          <p>{annotation.text}</p>
+                          <p className="projection-fragment__note">
+                            Local visitor contribution, not museum fact.
+                          </p>
+                        </section>
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+
+              {orphanLayerAnnotations.length > 0 ? (
+                <section className="projection-story-card projection-story-card--local">
+                  <div className="projection-story-card__header">
+                    <p className="projection-story-card__kicker">Local-only</p>
+                    <h3>Visitor fragments not linked to a current mug</h3>
+                    <p>These remain in this browser only.</p>
+                  </div>
+
+                  <div className="projection-fragments">
+                    {orphanLayerAnnotations.map((annotation) => (
+                      <section
+                        key={annotation.id}
+                        className="projection-fragment projection-fragment--visitor"
+                      >
+                        <SourceBadge type={annotation.sourceType} />
+                        <h4>{annotationLabels[annotation.type]}</h4>
+                        <p>{annotation.text}</p>
+                        <p className="projection-fragment__note">
+                          Local visitor contribution, not museum fact.
+                        </p>
+                      </section>
+                    ))}
+                  </div>
                 </section>
-              ))}
-              {visitorAnnotations.map((annotation) => (
-                <section key={annotation.id} className="projection-fragment">
-                  <SourceBadge type={annotation.sourceType} />
-                  <h3>{annotationLabels[annotation.type]}</h3>
-                  <p>{annotation.text}</p>
-                  <p className="projection-fragment__note">
-                    Local visitor contribution, not museum fact.
-                  </p>
-                </section>
-              ))}
+              ) : null}
             </div>
           </article>
 
           <SoundManager layerState={activeLayer} audioPaths={audioPaths} />
           <ProjectionWall
-            mugs={placeholderMugs}
+            mugs={archiveMugs}
             annotations={annotations}
             onClearDemoData={() => clearAnnotations()}
           />
