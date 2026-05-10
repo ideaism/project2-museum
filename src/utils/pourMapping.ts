@@ -1,8 +1,8 @@
 import type { LayerState } from '../types/archive';
 import type { PourMappingInput } from '../types/interaction';
 
-const DEFAULT_DEAD_ZONE_DEGREES = 6;
-const DEFAULT_FULL_POUR_DEGREES = 72;
+const DEFAULT_DEAD_ZONE_DEGREES = 4;
+const DEFAULT_FULL_POUR_DEGREES = 55;
 
 export function clampPourValue(value: number) {
   if (!Number.isFinite(value)) {

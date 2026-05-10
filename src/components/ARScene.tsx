@@ -17,7 +17,7 @@ const LOCAL_PUBLIC_ROOT = '/Users/beijixinfei/project2/public';
 
 type MarkerAssetState = 'unchecked' | 'available' | 'missing' | 'invalid';
 type MarkerTrackingState = 'idle' | 'scanning' | 'found' | 'lost';
-type RuntimeState = 'idle' | 'loading' | 'ready' | 'error';
+type RuntimeState = 'idle' | 'loading' | 'preview' | 'ready' | 'error';
 const ARJS_PATTERN_MIN_NUMERIC_VALUES = 768;
 
 interface ARSceneProps {
@@ -102,13 +102,17 @@ function getLocalPublicAssetPath(path: string) {
   return `${LOCAL_PUBLIC_ROOT}/${normalizedPath}`;
 }
 
-async function requestCameraAccess() {
+type CameraRequestResult =
+  | { state: 'granted'; stream: MediaStream }
+  | { state: Exclude<CameraPermissionState, 'checking' | 'prompt' | 'granted' | 'markerMissing'> };
+
+async function requestCameraStream(): Promise<CameraRequestResult> {
   if (!window.isSecureContext && window.location.hostname !== 'localhost') {
-    return 'unsupported' satisfies CameraPermissionState;
+    return { state: 'unsupported' };
   }
 
   if (!navigator.mediaDevices?.getUserMedia) {
-    return 'unsupported' satisfies CameraPermissionState;
+    return { state: 'unsupported' };
   }
 
   try {
@@ -116,14 +120,13 @@ async function requestCameraAccess() {
       video: { facingMode: { ideal: 'environment' } },
       audio: false,
     });
-    stream.getTracks().forEach((track) => track.stop());
-    return 'granted' satisfies CameraPermissionState;
+    return { state: 'granted', stream };
   } catch (error) {
     if (error instanceof DOMException && error.name === 'NotAllowedError') {
-      return 'denied' satisfies CameraPermissionState;
+      return { state: 'denied' };
     }
 
-    return 'error' satisfies CameraPermissionState;
+    return { state: 'error' };
   }
 }
 
@@ -143,6 +146,34 @@ function findSources(fragment: NarrativeFragment, sources: ArchiveSource[]) {
   return fragment.sourceIds
     .map((sourceId) => sources.find((source) => source.id === sourceId))
     .filter((source): source is ArchiveSource => Boolean(source));
+}
+
+function getMotionStatus(tilt: DeviceTiltState) {
+  if (!tilt.isSupported || tilt.permissionState === 'unavailable') {
+    return 'Sensor unavailable';
+  }
+
+  if (tilt.permissionState === 'prompt') {
+    return 'Sensor permission needed';
+  }
+
+  if (tilt.permissionState === 'denied') {
+    return 'Sensor denied';
+  }
+
+  if (tilt.inputSource === 'sensor') {
+    return 'Motion tilt active';
+  }
+
+  return 'Manual fallback active';
+}
+
+function canRequestMotion(tilt: DeviceTiltState) {
+  return (
+    tilt.isSupported &&
+    tilt.inputSource !== 'sensor' &&
+    (tilt.permissionState === 'prompt' || tilt.permissionState === 'granted')
+  );
 }
 
 function buildArchiveObjectMarkup(modelPath: string | undefined) {
@@ -192,6 +223,8 @@ function buildSceneMarkup(markerPatternPath: string, modelPath: string | undefin
 
 function ARScene({ mug, tilt }: ARSceneProps) {
   const sceneHostRef = useRef<HTMLDivElement | null>(null);
+  const cameraPreviewRef = useRef<HTMLVideoElement | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
   const [cameraState, setCameraState] = useState<CameraPermissionState>('prompt');
   const [runtimeState, setRuntimeState] = useState<RuntimeState>('idle');
   const [markerAssetState, setMarkerAssetState] = useState<MarkerAssetState>('unchecked');
@@ -205,6 +238,20 @@ function ARScene({ mug, tilt }: ARSceneProps) {
   const activeFragment = activeFragments[0];
   const fallbackPath = `/object/${mug.slug}`;
   const markerLocalPath = getLocalPublicAssetPath(mug.markerPatternPath);
+  const motionStatus = getMotionStatus(tilt);
+  const showMotionButton = canRequestMotion(tilt);
+  const showCameraButton =
+    cameraState === 'prompt' || cameraState === 'error' || cameraState === 'markerMissing';
+  const isRequestingCamera = runtimeState === 'loading' || cameraState === 'checking';
+
+  const stopCameraPreview = useCallback(() => {
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
+
+    if (cameraPreviewRef.current) {
+      cameraPreviewRef.current.srcObject = null;
+    }
+  }, []);
 
   useEffect(() => {
     let isCurrent = true;
@@ -246,29 +293,42 @@ function ARScene({ mug, tilt }: ARSceneProps) {
     setCameraState('checking');
     setRuntimeState('loading');
 
-    const nextCameraState = await requestCameraAccess();
-    setCameraState(nextCameraState);
+    const cameraResult = await requestCameraStream();
+    setCameraState(cameraResult.state);
 
-    if (nextCameraState !== 'granted') {
-      setRuntimeState(nextCameraState === 'unsupported' ? 'idle' : 'error');
+    if (cameraResult.state !== 'granted') {
+      setRuntimeState(cameraResult.state === 'unsupported' ? 'idle' : 'error');
       return;
+    }
+
+    stopCameraPreview();
+    cameraStreamRef.current = cameraResult.stream;
+
+    if (cameraPreviewRef.current) {
+      cameraPreviewRef.current.srcObject = cameraResult.stream;
+      void cameraPreviewRef.current.play().catch(() => {
+        setStatusMessage(
+          'Camera permission was granted, but this browser did not start the inline preview. Continue with the no-AR route if the view remains blank.',
+        );
+      });
     }
 
     const nextMarkerAssetState = await checkMarkerAsset(mug.markerPatternPath);
     setMarkerAssetState(nextMarkerAssetState);
 
     if (nextMarkerAssetState !== 'available') {
-      setRuntimeState('error');
+      setRuntimeState('preview');
       setCameraState('markerMissing');
       setStatusMessage(
         nextMarkerAssetState === 'invalid'
-          ? `Marker file found but it does not look like a valid AR.js .patt pattern. Replace it with a real AR.js marker pattern at ${markerLocalPath}.`
-          : `Missing marker asset. Add the .patt file at ${markerLocalPath} before using live AR.js marker tracking.`,
+          ? `Camera preview is active, but the marker file does not look like a valid AR.js .patt pattern. Replace it with a real AR.js marker pattern at ${markerLocalPath}.`
+          : `Camera preview is active, but live marker tracking needs the .patt file at ${markerLocalPath}.`,
       );
       return;
     }
 
     try {
+      stopCameraPreview();
       await loadScript(AFRAME_SCRIPT_ID, AFRAME_SRC);
       await loadScript(ARJS_SCRIPT_ID, ARJS_SRC);
 
@@ -285,7 +345,9 @@ function ARScene({ mug, tilt }: ARSceneProps) {
         'The AR.js scripts could not be loaded in this environment. The archive overlay remains available below.',
       );
     }
-  }, [markerLocalPath, mountArScene, mug.markerPatternPath]);
+  }, [markerLocalPath, mountArScene, mug.markerPatternPath, stopCameraPreview]);
+
+  useEffect(() => stopCameraPreview, [stopCameraPreview]);
 
   const markerStatus =
     markerAssetState === 'missing'
@@ -294,12 +356,14 @@ function ARScene({ mug, tilt }: ARSceneProps) {
         ? 'Marker pattern invalid'
       : markerAssetState === 'available' && runtimeState !== 'ready'
         ? 'Marker asset ready'
+      : runtimeState === 'preview'
+        ? 'Camera preview active'
       : markerTrackingState === 'found'
-        ? 'Marker found'
+          ? 'Marker found'
         : markerTrackingState === 'lost'
           ? 'Marker lost'
           : runtimeState === 'ready'
-            ? 'Scanning for marker'
+            ? 'Camera ready / scanning marker'
             : 'Marker scanner idle';
 
   return (
@@ -323,49 +387,88 @@ function ARScene({ mug, tilt }: ARSceneProps) {
       <div className="ar-scene__stage" data-runtime={runtimeState}>
         <div ref={sceneHostRef} className="ar-scene__host" aria-hidden={runtimeState !== 'ready'} />
 
-        {runtimeState !== 'ready' ? (
+        <video
+          ref={cameraPreviewRef}
+          className="ar-scene__preview"
+          aria-hidden={runtimeState !== 'preview'}
+          autoPlay
+          muted
+          playsInline
+        />
+
+        {runtimeState !== 'ready' && runtimeState !== 'preview' ? (
           <div className="ar-scene__camera-placeholder" aria-hidden="true">
             <span />
           </div>
         ) : null}
 
         <div className="ar-scene__hud">
-          <span className="layer-label">{tilt.layerState}</span>
-          <span>{markerStatus}</span>
+          <div className="ar-scene__hud-primary">
+            <span className="layer-label">{tilt.layerState}</span>
+            <span>{markerStatus}</span>
+          </div>
+          <div className="ar-scene__hud-motion">
+            <span>{motionStatus}</span>
+            {showMotionButton ? (
+              <button
+                type="button"
+                onClick={() => {
+                  void tilt.requestPermission();
+                }}
+              >
+                {tilt.permissionState === 'prompt' ? 'Enable tilt' : 'Use tilt'}
+              </button>
+            ) : null}
+          </div>
+          <div className="ar-scene__hud-actions">
+            {showCameraButton ? (
+              <button
+                type="button"
+                onClick={() => {
+                  void startAr();
+                }}
+                disabled={isRequestingCamera}
+              >
+                {isRequestingCamera ? 'Starting camera' : 'Start camera'}
+              </button>
+            ) : null}
+            <Link to={fallbackPath}>No AR</Link>
+          </div>
         </div>
 
-        <article className="ar-overlay-card" aria-live="polite">
-          <div className="ar-overlay-card__header">
-            <span className="layer-label">{tilt.layerState}</span>
+        <details className="ar-layer-drawer">
+          <summary>
+            <span>
+              <span className="layer-label">{tilt.layerState}</span>
+              <strong>{activeFragment?.title ?? 'No fragment for this layer'}</strong>
+            </span>
             {activeFragment ? <SourceBadge type={activeFragment.sourceType} /> : null}
-          </div>
+          </summary>
 
-          {activeFragment ? (
-            <>
-              <h2>{activeFragment.title}</h2>
-              <p>{activeFragment.text}</p>
-              <dl className="ar-overlay-card__sources" aria-label="Visible source labels">
-                {findSources(activeFragment, mug.sources).map((source) => (
-                  <div key={source.id}>
-                    <dt>{source.label}</dt>
-                    <dd>
-                      {source.type}
-                      {source.confidence ? ` · ${source.confidence}` : ''}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </>
-          ) : (
-            <>
-              <h2>No fragment for this layer</h2>
+          <article className="ar-layer-drawer__content" aria-live="polite">
+            {activeFragment ? (
+              <>
+                <p>{activeFragment.text}</p>
+                <dl className="ar-overlay-card__sources" aria-label="Visible source labels">
+                  {findSources(activeFragment, mug.sources).map((source) => (
+                    <div key={source.id}>
+                      <dt>{source.label}</dt>
+                      <dd>
+                        {source.type}
+                        {source.confidence ? ` · ${source.confidence}` : ''}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </>
+            ) : (
               <p>
                 This absence remains visible until sourced archive data or local visitor
                 contributions are added.
               </p>
-            </>
-          )}
-        </article>
+            )}
+          </article>
+        </details>
 
         {markerAssetState === 'missing' || markerAssetState === 'invalid' ? (
           <aside className="ar-marker-missing" aria-label="Missing marker asset">
@@ -393,7 +496,7 @@ function ARScene({ mug, tilt }: ARSceneProps) {
         onRequestCamera={() => {
           void startAr();
         }}
-        isRequesting={runtimeState === 'loading' || cameraState === 'checking'}
+        isRequesting={isRequestingCamera}
         markerPath={mug.markerPatternPath}
         markerLocalPath={markerLocalPath}
         message={statusMessage}

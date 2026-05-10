@@ -64,7 +64,7 @@ function CameraPermissionNotice({
   message,
 }: CameraPermissionNoticeProps) {
   const copy = copyByState[state];
-  const showRequestButton = state === 'prompt' || state === 'error';
+  const showRequestButton = state === 'prompt' || state === 'error' || state === 'markerMissing';
   const showFallbackLink =
     state === 'denied' ||
     state === 'unsupported' ||

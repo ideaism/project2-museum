@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   DeviceTiltState,
   PourInputSource,
@@ -11,6 +11,7 @@ import {
 } from '../utils/pourMapping';
 
 type PermissionResponse = 'granted' | 'denied';
+type OrientationBaseline = { beta: number; gamma: number };
 
 type DeviceOrientationEventWithPermission = typeof DeviceOrientationEvent & {
   requestPermission?: () => Promise<PermissionResponse>;
@@ -42,6 +43,8 @@ export function useDeviceTilt(initialPourValue = 0): DeviceTiltState {
   const [permissionState, setPermissionState] =
     useState<TiltPermissionState>(getInitialPermissionState);
   const [inputSource, setInputSource] = useState<PourInputSource>('manual');
+  const orientationBaselineRef = useRef<OrientationBaseline | null>(null);
+  const hasSensorEventRef = useRef(false);
   const isSupported = canUseDeviceOrientation();
 
   const requestPermission = useCallback(async () => {
@@ -52,6 +55,9 @@ export function useDeviceTilt(initialPourValue = 0): DeviceTiltState {
       setInputSource('manual');
       return 'unavailable';
     }
+
+    orientationBaselineRef.current = null;
+    hasSensorEventRef.current = false;
 
     if (typeof OrientationEvent.requestPermission !== 'function') {
       setPermissionState('granted');
@@ -83,17 +89,39 @@ export function useDeviceTilt(initialPourValue = 0): DeviceTiltState {
       return undefined;
     }
 
+    hasSensorEventRef.current = false;
+
     function handleOrientation(event: DeviceOrientationEvent) {
+      const beta = Number.isFinite(event.beta) ? Number(event.beta) : 0;
+      const gamma = Number.isFinite(event.gamma) ? Number(event.gamma) : 0;
+
+      hasSensorEventRef.current = true;
+
+      if (!orientationBaselineRef.current) {
+        orientationBaselineRef.current = { beta, gamma };
+        setPourValue(0);
+        return;
+      }
+
+      const baseline = orientationBaselineRef.current;
       setPourValue(
         mapDeviceOrientationToPourValue({
-          beta: event.beta,
-          gamma: event.gamma,
+          beta: beta - baseline.beta,
+          gamma: gamma - baseline.gamma,
         }),
       );
     }
 
+    const unavailableTimer = window.setTimeout(() => {
+      if (!hasSensorEventRef.current) {
+        setPermissionState('unavailable');
+        setInputSource('manual');
+      }
+    }, 2500);
+
     window.addEventListener('deviceorientation', handleOrientation);
     return () => {
+      window.clearTimeout(unavailableTimer);
       window.removeEventListener('deviceorientation', handleOrientation);
     };
   }, [inputSource, isSupported, permissionState]);
