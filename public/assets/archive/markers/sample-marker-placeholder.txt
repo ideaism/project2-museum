@@ -1,0 +1,4 @@
+Replace this placeholder with an AR.js `.patt` marker file for the sample mug.
+The sample data currently expects:
+
+/assets/archive/markers/sample-mug.patt

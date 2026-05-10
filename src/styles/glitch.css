@@ -1,0 +1,215 @@
+.glitch-layer-surface {
+  --glitch-offset: 0.02em;
+  --glitch-opacity: 0.18;
+  --glitch-speed: 4.8s;
+  --scanline-opacity: 0.14;
+  --grain-opacity: 0.08;
+}
+
+.glitch-layer-middle {
+  --glitch-offset: 0.035em;
+  --glitch-opacity: 0.28;
+  --glitch-speed: 3.6s;
+  --scanline-opacity: 0.22;
+  --grain-opacity: 0.14;
+}
+
+.glitch-layer-core {
+  --glitch-offset: 0.05em;
+  --glitch-opacity: 0.42;
+  --glitch-speed: 2.6s;
+  --scanline-opacity: 0.32;
+  --grain-opacity: 0.22;
+}
+
+.glitch-text {
+  position: relative;
+  display: inline-block;
+  color: var(--color-ink);
+  letter-spacing: 0;
+  text-shadow:
+    calc(var(--glitch-offset) * -1) 0 0 rgba(11, 114, 133, var(--glitch-opacity)),
+    var(--glitch-offset) 0 0 rgba(156, 49, 95, var(--glitch-opacity));
+  animation: glitch-shear var(--glitch-speed) steps(2, end) infinite;
+}
+
+.glitch-text__base {
+  position: relative;
+  z-index: 1;
+}
+
+.glitch-text__copy {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: inherit;
+  opacity: var(--glitch-opacity);
+  pointer-events: none;
+}
+
+.glitch-text__copy--cyan {
+  color: #0b7285;
+  transform: translateX(calc(var(--glitch-offset) * -1));
+  animation: glitch-shear var(--glitch-speed) steps(2, end) infinite;
+}
+
+.glitch-text__copy--magenta {
+  color: #9c315f;
+  transform: translateX(var(--glitch-offset));
+  animation: glitch-shear calc(var(--glitch-speed) * 1.25) steps(2, end) infinite reverse;
+}
+
+.glitch-text--low .glitch-text__copy {
+  clip-path: inset(0 0 72% 0);
+}
+
+.glitch-text--medium .glitch-text__copy {
+  clip-path: inset(12% 0 38% 0);
+}
+
+.glitch-text--high .glitch-text__copy {
+  clip-path: inset(4% 0 18% 0);
+}
+
+.redacted-text {
+  position: relative;
+  display: inline;
+  color: transparent;
+}
+
+.redacted-text::before {
+  position: absolute;
+  inset: 0.08em -0.08em 0.02em;
+  border-radius: 1px;
+  background:
+    linear-gradient(90deg, #0e0e0d, #25231f 42%, #0e0e0d 76%),
+    repeating-linear-gradient(90deg, transparent 0 10px, rgba(255, 255, 255, 0.08) 10px 12px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.72);
+  content: '';
+}
+
+.redacted-text::after {
+  position: absolute;
+  inset: 48% -0.06em auto;
+  height: 1px;
+  background: rgba(255, 253, 248, 0.22);
+  content: '';
+}
+
+.scanline-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.scanline-overlay::before,
+.scanline-overlay::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+}
+
+.scanline-overlay::before {
+  opacity: var(--scanline-opacity);
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(29, 28, 25, 0.42) 0 1px,
+      transparent 1px 5px
+    );
+  mix-blend-mode: multiply;
+}
+
+.scanline-overlay::after {
+  opacity: var(--grain-opacity);
+  background:
+    radial-gradient(circle at 12% 18%, rgba(29, 28, 25, 0.28) 0 1px, transparent 1px),
+    radial-gradient(circle at 72% 38%, rgba(29, 28, 25, 0.2) 0 1px, transparent 1px),
+    radial-gradient(circle at 42% 78%, rgba(29, 28, 25, 0.22) 0 1px, transparent 1px);
+  background-size: 19px 23px, 29px 31px, 37px 41px;
+  animation: archive-grain 1.2s steps(2, end) infinite;
+}
+
+.scanline-overlay--middle::before {
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(29, 28, 25, 0.5) 0 1px,
+      transparent 1px 4px,
+      rgba(11, 114, 133, 0.12) 4px 5px
+    );
+}
+
+.scanline-overlay--core::before {
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(29, 28, 25, 0.58) 0 1px,
+      transparent 1px 3px,
+      rgba(156, 49, 95, 0.16) 3px 5px
+    );
+}
+
+.glitch-surface {
+  --wall-accent: #183f45;
+  --wall-shadow: rgba(24, 63, 69, 0.18);
+}
+
+.glitch-middle {
+  --wall-accent: #8b2f2f;
+  --wall-shadow: rgba(139, 47, 47, 0.2);
+}
+
+.glitch-core {
+  --wall-accent: #1d1c19;
+  --wall-shadow: rgba(29, 28, 25, 0.28);
+}
+
+@keyframes glitch-shear {
+  0%,
+  86%,
+  100% {
+    transform: translateX(0);
+  }
+
+  88% {
+    transform: translateX(calc(var(--glitch-offset) * -1));
+  }
+
+  92% {
+    transform: translateX(var(--glitch-offset));
+  }
+}
+
+@keyframes archive-grain {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  50% {
+    transform: translate(-1.4rem, 0.7rem);
+  }
+
+  100% {
+    transform: translate(0.8rem, -0.6rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glitch-text__copy,
+  .glitch-text,
+  .scanline-overlay::after {
+    animation: none;
+  }
+
+  .glitch-text__copy {
+    transform: none;
+  }
+
+  .scanline-overlay::before {
+    opacity: min(var(--scanline-opacity), 0.16);
+  }
+}
