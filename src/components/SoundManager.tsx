@@ -20,7 +20,6 @@ function SoundManager({
   className,
 }: SoundManagerProps) {
   const {
-    activePath,
     caption,
     hasGeneratedFallback,
     isEnabled,
@@ -45,12 +44,9 @@ function SoundManager({
         <p className="sound-manager__caption">
           Written sound cue: <span>{caption}</span>
         </p>
-        <p className="sound-manager__asset-note">
-          Optional file: <code>{activePath ?? 'not supplied'}</code>
-        </p>
         {hasGeneratedFallback ? (
           <p className="sound-manager__asset-note">
-            Generated Web Audio fallback is active; no external audio is required.
+            A quiet fallback texture is active. The archive remains readable with sound muted.
           </p>
         ) : null}
       </div>

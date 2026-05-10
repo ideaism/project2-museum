@@ -91,7 +91,7 @@ function MugPourStage({ mug, interaction, fragments }: MugPourStageProps) {
 
       <p className="mug-pour-stage__state" aria-live="polite">
         Mug rotation {interaction.mugRotationDeg} degrees. Archive transition:{' '}
-        {interaction.contentTransitionState}. Optional sound intensity{' '}
+        {interaction.contentTransitionState}. Sound intensity{' '}
         {Math.round(interaction.soundIntensity * 100)}%.
       </p>
     </div>

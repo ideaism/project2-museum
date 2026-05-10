@@ -315,8 +315,7 @@ function ObjectPage() {
         </section>
         <figcaption>
             The mug model or image rotates from the same pour value as the gesture
-            experience. This route does not need camera access. Model path:{' '}
-            <code>{mug.modelPath ?? 'No model path yet'}</code>
+            experience. This route does not need camera access.
         </figcaption>
       </figure>
       </div>

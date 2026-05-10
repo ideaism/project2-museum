@@ -236,11 +236,11 @@ export function useLayerSound({
           const response = await fetch(path, { method: 'HEAD', cache: 'no-store' });
 
           if (!response.ok) {
-            setStatus('Archive audio files are missing; generated tactile fallback is active.');
+            setStatus('A quiet fallback sound texture is active.');
             return;
           }
         } catch {
-          setStatus('Archive audio files could not be checked; generated tactile fallback is active.');
+          setStatus('A quiet fallback sound texture is active.');
           return;
         }
 
@@ -249,7 +249,7 @@ export function useLayerSound({
         audio.preload = 'metadata';
         audio.volume = 0;
         audio.addEventListener('error', () => {
-          setStatus('Archive audio file missing; generated tactile fallback is active.');
+          setStatus('A quiet fallback sound texture is active.');
         });
         audioRefs.current[layer] = audio;
       }),
