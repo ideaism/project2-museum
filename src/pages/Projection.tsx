@@ -1,12 +1,20 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import ArchiveTexture from '../components/ArchiveTexture';
 import GlitchText from '../components/GlitchText';
+import LayerTransition from '../components/LayerTransition';
 import ProjectionWall from '../components/ProjectionWall';
 import RedactedText from '../components/RedactedText';
 import ScanlineOverlay from '../components/ScanlineOverlay';
 import SoundManager from '../components/SoundManager';
 import SourceBadge from '../components/object/SourceBadge';
+import { layerAudioPaths } from '../data/layerAudio';
 import { archiveMugs } from '../data/mugs';
-import { useArchiveAnnotations } from '../hooks/useArchiveAnnotations';
+import { useCommunityArchive } from '../hooks/useCommunityArchive';
+import {
+  clearStoredSpeculativeFragments,
+  readStoredSpeculativeFragments,
+  type SpeculativeNarrativeFragment,
+} from '../services/speculativeNarrative';
 import type { AnnotationType, LayerState, MugRecord, NarrativeFragment } from '../types/archive';
 import '../styles/projection.css';
 
@@ -25,10 +33,10 @@ const layerDescriptions: Record<LayerState, string> = {
   core: 'Unresolved layer for redaction, opacity, and local visitor memory.',
 };
 
-const audioPaths: Record<LayerState, string> = {
-  surface: '/assets/archive/audio/projection-surface.mp3',
-  middle: '/assets/archive/audio/projection-middle.mp3',
-  core: '/assets/archive/audio/projection-core.mp3',
+const layerPourValues: Record<LayerState, number> = {
+  surface: 0.12,
+  middle: 0.56,
+  core: 1,
 };
 
 interface ProjectionStoryGroup {
@@ -59,17 +67,34 @@ function getStoryGroupsForLayer(layer: LayerState): ProjectionStoryGroup[] {
 
 function Projection() {
   const [activeLayer, setActiveLayer] = useState<LayerState>('surface');
-  const { annotations, clearAnnotations } = useArchiveAnnotations();
+  const [speculativeFragments, setSpeculativeFragments] = useState<
+    SpeculativeNarrativeFragment[]
+  >([]);
+  const { allContributions, clearContributions } = useCommunityArchive();
   const storyGroups = useMemo(() => getStoryGroupsForLayer(activeLayer), [activeLayer]);
   const activeLayerAnnotations = useMemo(
-    () => annotations.filter((annotation) => annotation.layer === activeLayer),
-    [activeLayer, annotations],
+    () => allContributions.filter((annotation) => annotation.layerState === activeLayer),
+    [activeLayer, allContributions],
   );
   const knownMugIds = useMemo(() => new Set(archiveMugs.flatMap((mug) => [mug.id, mug.slug])), []);
   const orphanLayerAnnotations = useMemo(
     () => activeLayerAnnotations.filter((annotation) => !knownMugIds.has(annotation.mugId)),
     [activeLayerAnnotations, knownMugIds],
   );
+  const activeSpeculativeFragments = useMemo(
+    () => speculativeFragments.filter((fragment) => fragment.layer === activeLayer),
+    [activeLayer, speculativeFragments],
+  );
+
+  useEffect(() => {
+    setSpeculativeFragments(readStoredSpeculativeFragments());
+  }, []);
+
+  function handleClearProjectionDemoData() {
+    clearContributions();
+    clearStoredSpeculativeFragments();
+    setSpeculativeFragments([]);
+  }
 
   return (
     <section
@@ -77,6 +102,8 @@ function Projection() {
       aria-labelledby="projection-title"
     >
       <div className="projection-stage">
+        <ArchiveTexture layerState={activeLayer} variant="halftone" />
+        <LayerTransition layerState={activeLayer} pourValue={layerPourValues[activeLayer]} />
         <ScanlineOverlay layerState={activeLayer} />
 
         <div className="projection-stage__header">
@@ -149,10 +176,13 @@ function Projection() {
                           className="projection-fragment projection-fragment--visitor"
                         >
                           <SourceBadge type={annotation.sourceType} />
-                          <h4>{annotationLabels[annotation.type]}</h4>
+                          <h4>
+                            {annotation.featured ? 'Featured ' : ''}
+                            {annotationLabels[annotation.type]}
+                          </h4>
                           <p>{annotation.text}</p>
                           <p className="projection-fragment__note">
-                            Local visitor contribution, not museum fact.
+                            Local visitor contribution, not museum fact. {annotation.upvotes} upvotes.
                           </p>
                         </section>
                       ))}
@@ -179,8 +209,32 @@ function Projection() {
                         <h4>{annotationLabels[annotation.type]}</h4>
                         <p>{annotation.text}</p>
                         <p className="projection-fragment__note">
-                          Local visitor contribution, not museum fact.
+                          Local visitor contribution, not museum fact. {annotation.upvotes} upvotes.
                         </p>
+                      </section>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              {activeSpeculativeFragments.length > 0 ? (
+                <section className="projection-story-card projection-story-card--speculative">
+                  <div className="projection-story-card__header">
+                    <p className="projection-story-card__kicker">Speculative AI mirror</p>
+                    <h3>Generated prompts, not verified history</h3>
+                    <p>These are local prototype outputs and are not object record sources.</p>
+                  </div>
+
+                  <div className="projection-fragments">
+                    {activeSpeculativeFragments.map((fragment) => (
+                      <section
+                        key={fragment.id}
+                        className="projection-fragment projection-fragment--speculative"
+                      >
+                        <SourceBadge type="speculation" />
+                        <h4>{fragment.title}</h4>
+                        <p>{fragment.text}</p>
+                        <p className="projection-fragment__note">{fragment.disclaimer}</p>
                       </section>
                     ))}
                   </div>
@@ -189,11 +243,15 @@ function Projection() {
             </div>
           </article>
 
-          <SoundManager layerState={activeLayer} audioPaths={audioPaths} />
+          <SoundManager
+            layerState={activeLayer}
+            audioPaths={layerAudioPaths}
+            pourValue={layerPourValues[activeLayer]}
+          />
           <ProjectionWall
             mugs={archiveMugs}
-            annotations={annotations}
-            onClearDemoData={() => clearAnnotations()}
+            contributions={allContributions}
+            onClearDemoData={handleClearProjectionDemoData}
           />
         </div>
       </div>

@@ -4,6 +4,8 @@ export type TiltPermissionState = 'prompt' | 'granted' | 'denied' | 'unavailable
 
 export type PourInputSource = 'sensor' | 'manual';
 
+export type PourContentTransitionState = 'settled' | 'transitioning' | 'spilling';
+
 export interface PourMappingInput {
   beta: number | null;
   gamma: number | null;
@@ -19,4 +21,11 @@ export interface DeviceTiltState {
   isSupported: boolean;
   setManualPourValue: (value: number) => void;
   inputSource: PourInputSource;
+}
+
+export interface PourInteractionState extends DeviceTiltState {
+  contentTransitionState: PourContentTransitionState;
+  mugRotationDeg: number;
+  soundIntensity: number;
+  setLayerState: (layer: LayerState) => void;
 }

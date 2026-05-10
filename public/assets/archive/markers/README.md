@@ -23,6 +23,7 @@ The sample marker files are:
 
 ```txt
 sample-mug.patt
+sample-mug-marker.png
 sample-mug-marker-card.png
 ```
 

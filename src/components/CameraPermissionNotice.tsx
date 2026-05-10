@@ -47,10 +47,12 @@ const copyByState: Record<
   markerMissing: {
     title: 'Marker pattern file missing',
     body: 'Live marker tracking needs the .patt file at the exact path below. The archive overlay and manual pour control remain available for assessment.',
+    action: 'Recheck marker',
   },
   error: {
     title: 'AR scanner did not start',
     body: 'The progressive AR wrapper could not load safely. Continue with the no-AR object page for review.',
+    action: 'Try camera again',
   },
 };
 

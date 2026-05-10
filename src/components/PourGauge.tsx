@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import type { LayerState } from '../types/archive';
 import type { DeviceTiltState } from '../types/interaction';
 
 const layerLabels = {
@@ -8,7 +9,7 @@ const layerLabels = {
 } as const;
 
 export interface PourGaugeProps {
-  tilt: DeviceTiltState;
+  tilt: DeviceTiltState & { setLayerState?: (layer: LayerState) => void };
   label?: string;
   description?: string;
 }
@@ -21,6 +22,14 @@ function PourGauge({
   const percentage = Math.round(tilt.pourValue * 100);
   const updateManualPourValue = (value: string) => {
     tilt.setManualPourValue(Number(value) / 100);
+  };
+  const chooseLayer = (layer: LayerState) => {
+    if (tilt.setLayerState) {
+      tilt.setLayerState(layer);
+      return;
+    }
+
+    tilt.setManualPourValue(layer === 'surface' ? 0 : layer === 'middle' ? 0.5 : 0.86);
   };
   const showPermissionButton =
     tilt.isSupported &&
@@ -87,6 +96,20 @@ function PourGauge({
           }}
         />
       </label>
+
+      <div className="pour-gauge__layer-buttons" aria-label="Choose archive layer">
+        {(Object.keys(layerLabels) as LayerState[]).map((layer) => (
+          <button
+            key={layer}
+            className={layer === tilt.layerState ? 'is-active' : undefined}
+            type="button"
+            aria-pressed={layer === tilt.layerState}
+            onClick={() => chooseLayer(layer)}
+          >
+            {layerLabels[layer]}
+          </button>
+        ))}
+      </div>
 
       <p className="pour-gauge__status">{fallbackReason}</p>
     </section>

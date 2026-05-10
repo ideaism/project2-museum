@@ -10,6 +10,8 @@ export interface FloatingFragment {
   sourceType: ArchiveSourceType;
   title: string;
   text: string;
+  upvotes?: number;
+  featured?: boolean;
 }
 
 interface FloatingFragmentsProps {
@@ -58,6 +60,12 @@ function FloatingFragments({ fragments, paused = false }: FloatingFragmentsProps
               fragment.text
             )}
           </p>
+          {fragment.sourceType === 'visitorContribution' ? (
+            <p className="shadow-fragment__community">
+              {fragment.featured ? 'featured · ' : ''}
+              {fragment.upvotes ?? 0} upvotes · upvoted does not mean true
+            </p>
+          ) : null}
         </article>
       ))}
     </div>

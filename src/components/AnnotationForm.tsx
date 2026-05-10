@@ -1,5 +1,10 @@
 import { FormEvent, useEffect, useId, useMemo, useState } from 'react';
-import { ANNOTATION_MAX_LENGTH, useArchiveAnnotations } from '../hooks/useArchiveAnnotations';
+import ContributionCard from './ContributionCard';
+import { useCommunityArchive } from '../hooks/useCommunityArchive';
+import {
+  COMMUNITY_CONTRIBUTION_MAX_LENGTH,
+  type CommunityContribution,
+} from '../services/communityArchive';
 import type { AnnotationType, LayerState } from '../types/archive';
 import SourceBadge from './object/SourceBadge';
 
@@ -19,9 +24,15 @@ const layerLabels: Record<LayerState, string> = {
 interface AnnotationFormProps {
   mugId: string;
   layer?: LayerState;
+  prefillDraft?: {
+    id: string;
+    text: string;
+    type: AnnotationType;
+    layer: LayerState;
+  };
 }
 
-function AnnotationForm({ mugId, layer = 'core' }: AnnotationFormProps) {
+function AnnotationForm({ mugId, layer = 'core', prefillDraft }: AnnotationFormProps) {
   const textareaId = useId();
   const typeId = useId();
   const layerId = useId();
@@ -30,14 +41,52 @@ function AnnotationForm({ mugId, layer = 'core' }: AnnotationFormProps) {
   const [selectedLayer, setSelectedLayer] = useState<LayerState>(layer);
   const [error, setError] = useState('');
   const [savedMessage, setSavedMessage] = useState('');
-  const { annotations, addAnnotation, clearAnnotations } = useArchiveAnnotations(mugId);
+  const {
+    contributions,
+    localVoteIds,
+    addContribution,
+    upvote,
+    toggleFeatured,
+    clearContributions,
+  } = useCommunityArchive(mugId);
 
   useEffect(() => {
     setSelectedLayer(layer);
   }, [layer]);
 
-  const remainingCharacters = ANNOTATION_MAX_LENGTH - text.length;
-  const recentAnnotations = useMemo(() => annotations.slice(0, 3), [annotations]);
+  useEffect(() => {
+    if (!prefillDraft) {
+      return;
+    }
+
+    setText(prefillDraft.text);
+    setType(prefillDraft.type);
+    setSelectedLayer(prefillDraft.layer);
+    setError('');
+    setSavedMessage('Speculative AI fragment loaded as an editable local draft.');
+  }, [prefillDraft]);
+
+  const remainingCharacters = COMMUNITY_CONTRIBUTION_MAX_LENGTH - text.length;
+  const parentContributions = useMemo(
+    () => contributions.filter((contribution) => !contribution.responseToId),
+    [contributions],
+  );
+  const responsesByParent = useMemo(() => {
+    const grouped = new Map<string, CommunityContribution[]>();
+
+    contributions.forEach((contribution) => {
+      if (!contribution.responseToId) {
+        return;
+      }
+
+      grouped.set(contribution.responseToId, [
+        ...(grouped.get(contribution.responseToId) ?? []),
+        contribution,
+      ]);
+    });
+
+    return grouped;
+  }, [contributions]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -49,10 +98,10 @@ function AnnotationForm({ mugId, layer = 'core' }: AnnotationFormProps) {
     }
 
     try {
-      addAnnotation({
+      addContribution({
         mugId,
         type,
-        layer: selectedLayer,
+        layerState: selectedLayer,
         text,
       });
       setText('');
@@ -112,7 +161,7 @@ function AnnotationForm({ mugId, layer = 'core' }: AnnotationFormProps) {
           <textarea
             id={textareaId}
             value={text}
-            maxLength={ANNOTATION_MAX_LENGTH}
+            maxLength={COMMUNITY_CONTRIBUTION_MAX_LENGTH}
             rows={4}
             placeholder="A short local note for the shadow archive"
             onChange={(event) => setText(event.currentTarget.value)}
@@ -140,26 +189,41 @@ function AnnotationForm({ mugId, layer = 'core' }: AnnotationFormProps) {
         ) : null}
       </form>
 
-      {recentAnnotations.length > 0 ? (
+      {parentContributions.length > 0 ? (
         <section className="annotation-list" aria-labelledby="recent-annotations-title">
           <div className="annotation-list__header">
-            <h3 id="recent-annotations-title">Recent visitor contributions</h3>
-            <button type="button" onClick={() => clearAnnotations(mugId)}>
+            <div>
+              <h3 id="recent-annotations-title">Community re-curation loop</h3>
+              <p>
+                Local prototype state. Featured and upvoted contributions can enter the
+                projection wall, but they are not verified facts.
+              </p>
+            </div>
+            <button type="button" onClick={() => clearContributions(mugId)}>
               Clear local demo data
             </button>
           </div>
-          <ul>
-            {recentAnnotations.map((annotation) => (
-              <li key={annotation.id}>
-                <div>
-                  <SourceBadge type={annotation.sourceType} />
-                  <span>{annotationTypeLabels[annotation.type]}</span>
-                  <span>{layerLabels[annotation.layer]}</span>
-                </div>
-                <p>{annotation.text}</p>
-              </li>
+          <div className="contribution-list">
+            {parentContributions.map((contribution) => (
+              <ContributionCard
+                key={contribution.id}
+                contribution={contribution}
+                responses={responsesByParent.get(contribution.id)}
+                hasVoted={localVoteIds.has(contribution.id)}
+                onUpvote={upvote}
+                onToggleFeatured={toggleFeatured}
+                onRespond={(parent, responseText) => {
+                  addContribution({
+                    mugId,
+                    layerState: parent.layerState,
+                    type: 'counterReading',
+                    text: responseText,
+                    responseToId: parent.id,
+                  });
+                }}
+              />
             ))}
-          </ul>
+          </div>
         </section>
       ) : null}
     </div>

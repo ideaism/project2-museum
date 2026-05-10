@@ -1,13 +1,13 @@
 import { Link, useParams } from 'react-router-dom';
 import ARScene from '../components/ARScene';
 import { findMugById } from '../data/mugs';
-import { useDeviceTilt } from '../hooks/useDeviceTilt';
+import { usePourInteraction } from '../hooks/usePourInteraction';
 import '../styles/ar.css';
 
 function ARExperience() {
   const { id } = useParams();
   const mug = findMugById(id);
-  const tilt = useDeviceTilt();
+  const tilt = usePourInteraction();
 
   if (!mug) {
     return (

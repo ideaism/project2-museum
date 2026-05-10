@@ -1,4 +1,7 @@
 import { Link } from 'react-router-dom';
+import ArchiveCard from '../components/ArchiveCard';
+import GlitchBadge from '../components/GlitchBadge';
+import GlitchText from '../components/GlitchText';
 import { archiveMugs } from '../data/mugs';
 
 function Home() {
@@ -8,7 +11,9 @@ function Home() {
     <section className="page-section hero-section" aria-labelledby="home-title">
       <div className="content-stack">
         <p className="eyebrow">Mobile WebAR museum prototype</p>
-        <h1 id="home-title">A mobile-first archive for political ceramic mugs.</h1>
+        <GlitchText as="h1" id="home-title" layerState="middle">
+          A mobile-first archive for political ceramic mugs.
+        </GlitchText>
         <p className="lead">
           Scan a cup marker, tilt the phone as if pouring, or use the no-camera
           walkthrough to reveal surface facts, middle readings, and core redactions or
@@ -27,22 +32,26 @@ function Home() {
         </div>
       </div>
 
-      <div className="archive-card" aria-label="Integrated prototype overview">
+      <ArchiveCard className="archive-card" layerState="middle" labelledBy="home-featured-title">
         <p className="eyebrow">Installation system</p>
-        <h2>{featuredMug.title}</h2>
+        <h2 id="home-featured-title">{featuredMug.title}</h2>
         <p>
           Physical cup plus QR/AR marker, mobile layer walkthrough, local annotation
           prompt, and projection mode share the same mug record.
         </p>
         <div className="archive-card__layers" aria-label="Narrative layers">
-          <span className="layer-label">surface</span>
-          <span className="layer-label">middle</span>
-          <span className="layer-label">core</span>
+          <GlitchBadge layerState="surface">surface</GlitchBadge>
+          <GlitchBadge layerState="middle" tone="warning">
+            middle
+          </GlitchBadge>
+          <GlitchBadge layerState="core" tone="dark">
+            core
+          </GlitchBadge>
         </div>
         <Link className="button-link" to="/about">
           Read design statement
         </Link>
-      </div>
+      </ArchiveCard>
     </section>
   );
 }

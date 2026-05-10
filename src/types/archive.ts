@@ -7,6 +7,16 @@ export type ArchiveSourceType =
   | 'visitorContribution'
   | 'redacted';
 
+export type ArchiveResearchSourceType =
+  | 'fact'
+  | 'visible-evidence'
+  | 'historical-context'
+  | 'inference'
+  | 'speculation'
+  | 'visitor-contribution'
+  | 'unresolved'
+  | 'redacted';
+
 export type AnnotationType =
   | 'question'
   | 'counterReading'
@@ -35,6 +45,7 @@ export interface NarrativeFragment {
   title: string;
   text: string;
   sourceType: ArchiveSourceType;
+  researchType?: ArchiveResearchSourceType;
   sourceIds: string[];
   citation?: string;
   isRedacted?: boolean;
@@ -64,21 +75,56 @@ export interface AssetRequirement {
   purpose: string;
 }
 
+export interface SourceMetadata {
+  museum?: string;
+  display?: string;
+  museumNumber?: string;
+  maker?: string;
+  placeDate?: string;
+  materialsTechniques?: string;
+  verificationStatus: 'verified' | 'partial' | 'unknown';
+  note: string;
+}
+
+export interface LayerDirection {
+  surface: string;
+  middle: string;
+  core: string;
+}
+
+export interface SpeculativeGenerationGuide {
+  keywords: string[];
+  safeSpeculationBoundaries: string[];
+  forbiddenClaims: string[];
+  suggestedPrompts: string[];
+}
+
 export interface MugRecord {
   id: string;
   slug: string;
   title: string;
+  shortHook?: string;
+  objectType?: string;
   maker?: string;
   dateRange?: string;
   collectionId?: string;
   material?: string;
   dimensions?: string;
+  sourceMetadata?: SourceMetadata;
+  visibleInscription?: string[];
+  markerId?: string;
   markerPatternPath: string;
   qrPath?: string;
   modelPath?: string;
   imagePath?: string;
   audioPath?: string;
   projectionAudioPath?: string;
+  soundDirection?: LayerDirection;
+  visualDirection?: LayerDirection;
+  visitorPrompt?: string;
+  ethicalNotes?: string[];
+  unresolvedQuestions?: string[];
+  aiSpeculation?: SpeculativeGenerationGuide;
   facts: NarrativeFragment[];
   middleReadings: NarrativeFragment[];
   coreFragments: NarrativeFragment[];

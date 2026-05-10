@@ -19,6 +19,7 @@ interface ObjectModelViewerProps {
   modelPath?: string;
   imagePath?: string;
   pourValue: number;
+  mugRotationDeg?: number;
 }
 
 type ModelViewerElement = HTMLElement & {
@@ -103,7 +104,7 @@ function clampPourValue(value: number) {
 }
 
 function getPourAngle(pourValue: number) {
-  return Math.round(clampPourValue(pourValue) * 78);
+  return Math.round(clampPourValue(pourValue) * 112);
 }
 
 function ObjectModelViewer({
@@ -112,12 +113,13 @@ function ObjectModelViewer({
   modelPath,
   imagePath,
   pourValue,
+  mugRotationDeg,
 }: ObjectModelViewerProps) {
   const modelViewerRef = useRef<ModelViewerElement | null>(null);
   const [modelState, setModelState] = useState<ModelState>(modelPath ? 'checking' : 'noModel');
   const [imageFailed, setImageFailed] = useState(false);
   const normalizedPourValue = clampPourValue(pourValue);
-  const pourAngle = getPourAngle(normalizedPourValue);
+  const pourAngle = mugRotationDeg ?? getPourAngle(normalizedPourValue);
   const modelOrientation = `0deg 0deg ${-pourAngle}deg`;
   const showModel = modelPath && modelState === 'ready';
   const reason = fallbackReason(modelState, modelPath);
@@ -129,6 +131,14 @@ function ObjectModelViewer({
     '--pour-value': String(normalizedPourValue),
     '--pour-angle': `${pourAngle}deg`,
     '--pour-rotation': `${-pourAngle}deg`,
+    '--pour-frame-rotation': `${-pourAngle * 0.16}deg`,
+    '--pour-image-rotation': `${-pourAngle * 0.46}deg`,
+    '--pour-stream-height': `${9 * normalizedPourValue}rem`,
+    '--pour-stream-min-height': `${0.4 * normalizedPourValue}rem`,
+    '--pour-stream-opacity': String(normalizedPourValue * 0.9),
+    '--inner-volume-opacity': String(0.18 + normalizedPourValue * 0.72),
+    '--inner-volume-scale': String(0.72 + normalizedPourValue * 0.3),
+    '--image-shift': `${normalizedPourValue * -0.9}rem`,
   } as CSSProperties;
 
   useEffect(() => {
@@ -269,6 +279,11 @@ function ObjectModelViewer({
               },
               createElement('span', null, 'Handle'),
             ))}
+            <div className="object-model-viewer__inner-volume" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
             <div className="object-model-viewer__pour-stream" aria-hidden="true" />
             <div className="object-model-viewer__layer" aria-live="polite">
               <span className="layer-label">{layer}</span>
@@ -279,11 +294,19 @@ function ObjectModelViewer({
         : null}
 
       {!showModel && imagePath && !imageFailed ? (
-        <img
-          src={imagePath}
-          alt={`Archive placeholder for ${title}`}
-          onError={() => setImageFailed(true)}
-        />
+        <div className="object-model-viewer__image-frame">
+          <img
+            src={imagePath}
+            alt={`Archive placeholder for ${title}`}
+            onError={() => setImageFailed(true)}
+          />
+          <div className="object-model-viewer__inner-volume" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+          <div className="object-model-viewer__pour-stream" aria-hidden="true" />
+        </div>
       ) : null}
 
       {!showModel && (!imagePath || imageFailed) ? (

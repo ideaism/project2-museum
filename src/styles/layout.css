@@ -240,6 +240,27 @@
   accent-color: var(--color-accent-strong);
 }
 
+.pour-gauge__layer-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.pour-gauge__layer-buttons button {
+  min-height: 2.45rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 999px;
+  background: #fffaf0;
+  color: var(--color-ink);
+  font-weight: 800;
+}
+
+.pour-gauge__layer-buttons button.is-active {
+  border-color: var(--color-deep);
+  background: var(--color-deep);
+  color: white;
+}
+
 .pour-gauge__status {
   margin-bottom: 0;
   font-size: 0.95rem;

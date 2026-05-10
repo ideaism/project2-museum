@@ -1,14 +1,21 @@
-import { Link, useParams } from 'react-router-dom';
-import { useId, useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useMemo, useState, type CSSProperties } from 'react';
 import AnnotationForm from '../components/AnnotationForm';
+import ArchiveTexture from '../components/ArchiveTexture';
+import GlitchText from '../components/GlitchText';
+import LayerTransition from '../components/LayerTransition';
+import MugPourStage from '../components/MugPourStage';
+import PourGauge from '../components/PourGauge';
+import SoundManager from '../components/SoundManager';
+import SpeculativeNarrativeGenerator from '../components/SpeculativeNarrativeGenerator';
 import LayerCard from '../components/object/LayerCard';
-import ObjectModelViewer from '../components/object/ObjectModelViewer';
+import { layerAudioPaths } from '../data/layerAudio';
 import { archiveMugs, findMugById } from '../data/mugs';
-import type { LayerState, MugRecord, NarrativeFragment } from '../types/archive';
+import { usePourInteraction } from '../hooks/usePourInteraction';
+import type { AnnotationType, LayerState, MugRecord, NarrativeFragment } from '../types/archive';
+import type { SpeculativeNarrativeFragment } from '../services/speculativeNarrative';
 import '../styles/object.css';
 import '../styles/projection.css';
-
-const layerOrder: LayerState[] = ['surface', 'middle', 'core'];
 
 const layerRangeLabels: Record<LayerState, string> = {
   surface: 'Surface: official facts and institutional frame',
@@ -16,24 +23,34 @@ const layerRangeLabels: Record<LayerState, string> = {
   core: 'Core: redacted, unresolved, and visitor memory',
 };
 
-function sliderValueToLayer(value: number): LayerState {
-  if (value < 0.34) {
-    return 'surface';
-  }
-
-  if (value < 0.67) {
-    return 'middle';
-  }
-
-  return 'core';
-}
-
-function layerToSliderValue(layer: LayerState) {
-  return layer === 'surface' ? 0 : layer === 'middle' ? 0.5 : 1;
-}
-
 function getFragmentsByLayer(layer: LayerState, fragments: Record<LayerState, NarrativeFragment[]>) {
   return fragments[layer];
+}
+
+function compactText(value: string | undefined, fallback: string) {
+  return value?.trim() || fallback;
+}
+
+function getDualContainerEntries(mug: MugRecord) {
+  const visibleLabel = mug.visibleInscription?.[0];
+  const middleReading = mug.middleReadings[0]?.title ?? mug.shortHook;
+  const politicalFeeling = mug.visitorPrompt ?? mug.middleReadings[1]?.title;
+  const unresolvedMemory = mug.unresolvedQuestions?.[0] ?? mug.coreFragments[0]?.title;
+
+  return {
+    physical: [
+      ['Material', compactText(mug.material, 'Material pending source data')],
+      ['Form', compactText(mug.objectType, 'Political ceramic mug')],
+      ['Label', compactText(visibleLabel, 'Visible inscription pending')],
+      ['Storage', compactText(mug.collectionId, 'Stored record pending verification')],
+    ],
+    emotional: [
+      ['Labour', compactText(middleReading, 'Labour reading pending')],
+      ['Protest', compactText(mug.visibleInscription?.[1] ?? mug.middleReadings[1]?.title, 'Protest signal pending')],
+      ['Political feeling', compactText(politicalFeeling, 'Visitor feeling remains open')],
+      ['Unresolved memory', compactText(unresolvedMemory, 'Memory withheld until evidence or consent')],
+    ],
+  };
 }
 
 interface ObjectCabinetCardProps {
@@ -77,10 +94,19 @@ function ObjectCabinetCard({ record, index, isActive }: ObjectCabinetCardProps) 
 
 function ObjectPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const mug = findMugById(id);
-  const sliderId = useId();
-  const [pourValue, setPourValue] = useState(0);
-  const selectedLayer = sliderValueToLayer(pourValue);
+  const pourInteraction = usePourInteraction();
+  const selectedLayer = pourInteraction.layerState;
+  const [annotationDraft, setAnnotationDraft] = useState<
+    | {
+        id: string;
+        text: string;
+        type: AnnotationType;
+        layer: LayerState;
+      }
+    | undefined
+  >();
   const fragmentsByLayer = useMemo(
     () => ({
       surface: mug?.facts ?? [],
@@ -90,9 +116,22 @@ function ObjectPage() {
     [mug],
   );
   const activeFragments = getFragmentsByLayer(selectedLayer, fragmentsByLayer);
+  const dualContainerEntries = useMemo(
+    () => (mug ? getDualContainerEntries(mug) : undefined),
+    [mug],
+  );
   const selectedMugIndex = mug
     ? archiveMugs.findIndex((record) => record.id === mug.id || record.slug === mug.slug)
     : -1;
+
+  function handleUseSpeculativeFragment(fragment: SpeculativeNarrativeFragment) {
+    setAnnotationDraft({
+      id: fragment.id,
+      type: fragment.mood,
+      layer: fragment.layer,
+      text: `[${fragment.label}; not verified history] ${fragment.text}`.slice(0, 280),
+    });
+  }
 
   if (!mug) {
     return (
@@ -120,7 +159,10 @@ function ObjectPage() {
   }
 
   return (
-    <section className="page-section object-page" aria-labelledby="object-title">
+    <section
+      className={`page-section object-page glitch-${selectedLayer} glitch-layer-${selectedLayer}`}
+      aria-labelledby="object-title"
+    >
       <section className="object-cabinet" aria-labelledby="cabinet-title">
         <div className="object-cabinet__header">
           <div>
@@ -131,6 +173,19 @@ function ObjectPage() {
             Select a compartment to open its camera-free object record. The active mug is
             shown below as a stored object with layer controls and source-labelled notes.
           </p>
+          <label className="object-selector">
+            <span>Select object</span>
+            <select
+              value={mug.slug}
+              onChange={(event) => navigate(`/object/${event.currentTarget.value}`)}
+            >
+              {archiveMugs.map((record) => (
+                <option key={record.id} value={record.slug}>
+                  {record.title}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         <nav className="object-cabinet__grid" aria-label="Stored mug compartments">
@@ -150,12 +205,15 @@ function ObjectPage() {
       </section>
 
       <div className="object-hero">
+        <ArchiveTexture layerState={selectedLayer} variant="card" />
         <div className="object-hero__copy">
           <p className="eyebrow">
             Active cabinet item
             {selectedMugIndex >= 0 ? ` / compartment ${selectedMugIndex + 1}` : ''}
           </p>
-          <h1 id="object-title">{mug.title}</h1>
+          <GlitchText as="h1" id="object-title" layerState={selectedLayer}>
+            {mug.title}
+          </GlitchText>
           <p className="lead">
             A camera-free walkthrough for reading the mug as a container for daily
             routine and political memory. Move the pour control to reveal the surface,
@@ -179,10 +237,50 @@ function ObjectPage() {
               <dd>{mug.collectionId ?? 'Placeholder pending source data'}</dd>
             </div>
           </dl>
+
+          {dualContainerEntries ? (
+            <section
+              className="dual-container-panel"
+              style={
+                {
+                  '--pour-value': String(pourInteraction.pourValue),
+                  '--emotional-opacity': String(0.48 + pourInteraction.pourValue * 0.52),
+                  '--emotional-offset': `${(1 - pourInteraction.pourValue) * 0.45}rem`,
+                } as CSSProperties
+              }
+              aria-labelledby="dual-container-title"
+            >
+              <div className="dual-container-panel__intro">
+                <p className="eyebrow">Dual container</p>
+                <h2 id="dual-container-title">Physical volume / emotional volume</h2>
+              </div>
+              <div className="dual-container-panel__columns">
+                <dl className="volume-list volume-list--physical">
+                  <dt>Physical volume</dt>
+                  {dualContainerEntries.physical.map(([label, value]) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <dl className="volume-list volume-list--emotional">
+                  <dt>Emotional volume</dt>
+                  {dualContainerEntries.emotional.map(([label, value]) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </section>
+          ) : null}
         </div>
 
         <figure className="object-media">
           <section className="object-pour-module" aria-labelledby="pour-title">
+            <LayerTransition layerState={selectedLayer} pourValue={pourInteraction.pourValue} />
             <div className="pour-panel__header">
               <div>
                 <p className="eyebrow">Manual pour</p>
@@ -193,44 +291,18 @@ function ObjectPage() {
               </p>
             </div>
 
-            <ObjectModelViewer
-              title={mug.title}
-              layer={selectedLayer}
-              modelPath={mug.modelPath}
-              imagePath={mug.imagePath}
-              pourValue={pourValue}
+            <MugPourStage
+              mug={mug}
+              interaction={pourInteraction}
+              fragments={activeFragments}
             />
 
             <div className="object-pour-module__controls">
-              <label className="pour-slider-label" htmlFor={sliderId}>
-                Pour from surface to core
-              </label>
-              <input
-                id={sliderId}
-                className="pour-slider"
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={pourValue}
-                aria-valuetext={layerRangeLabels[selectedLayer]}
-                onInput={(event) => setPourValue(Number(event.currentTarget.value))}
-                onChange={(event) => setPourValue(Number(event.currentTarget.value))}
+              <PourGauge
+                tilt={pourInteraction}
+                label="Pour the 3D mug"
+                description="Use device tilt where available, or move the slider and layer buttons to pour the mug through the archive."
               />
-
-              <div className="pour-layer-buttons" aria-label="Choose archive layer">
-                {layerOrder.map((layer) => (
-                  <button
-                    key={layer}
-                    className={layer === selectedLayer ? 'is-active' : undefined}
-                    type="button"
-                    aria-pressed={layer === selectedLayer}
-                    onClick={() => setPourValue(layerToSliderValue(layer))}
-                  >
-                    {layer}
-                  </button>
-                ))}
-              </div>
             </div>
           </section>
           <figcaption>
@@ -242,6 +314,13 @@ function ObjectPage() {
       </div>
 
       <LayerCard layer={selectedLayer} fragments={activeFragments} sources={mug.sources} />
+
+      <SoundManager
+        className="object-sound-module"
+        layerState={selectedLayer}
+        audioPaths={layerAudioPaths}
+        pourValue={pourInteraction.soundIntensity}
+      />
 
       <section className="object-installation-links" aria-labelledby="installation-title">
         <div>
@@ -259,7 +338,12 @@ function ObjectPage() {
       </section>
 
       <section className="object-memory-prompt" aria-label="Local co-curation prompt">
-        <AnnotationForm mugId={mug.id} layer={selectedLayer} />
+        <SpeculativeNarrativeGenerator
+          mug={mug}
+          layer={selectedLayer}
+          onUseAsAnnotation={handleUseSpeculativeFragment}
+        />
+        <AnnotationForm mugId={mug.id} layer={selectedLayer} prefillDraft={annotationDraft} />
       </section>
     </section>
   );

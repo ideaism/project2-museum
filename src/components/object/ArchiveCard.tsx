@@ -1,4 +1,5 @@
 import type { ArchiveSource, NarrativeFragment } from '../../types/archive';
+import RedactedText from '../RedactedText';
 import SourceBadge from './SourceBadge';
 
 interface ArchiveCardProps {
@@ -18,7 +19,16 @@ function ArchiveCard({ fragment, sources }: ArchiveCardProps) {
         <span className="object-fragment__layer">{fragment.layer}</span>
       </div>
       <h3>{fragment.title}</h3>
-      <p>{fragment.text}</p>
+      <p>
+        {fragment.sourceType === 'redacted' ? (
+          <>
+            <RedactedText text={fragment.text} layerState={fragment.layer} />{' '}
+            <span className="object-fragment__source-note">Redaction remains visible.</span>
+          </>
+        ) : (
+          fragment.text
+        )}
+      </p>
 
       {fragmentSources.length > 0 ? (
         <dl className="object-fragment__sources" aria-label="Fragment sources">
